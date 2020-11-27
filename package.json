@@ -1,0 +1,28 @@
+{
+  "name": "hegic-converter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "truffle test"
+  },
+  "scripts": {
+    "test": "truffle test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Larrypcdotcom/hegic-converter.git"
+  },
+  "author": "Larrypcdotcom",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/Larrypcdotcom/hegic-converter/issues"
+  },
+  "homepage": "https://github.com/Larrypcdotcom/hegic-converter#readme",
+  "devDependencies": {
+    "truffle": "^5.1.54"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^3.3.0"
+  }
+}
