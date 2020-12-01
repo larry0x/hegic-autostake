@@ -37,12 +37,12 @@ contract IOUTokenRedemption is Ownable {
         uint amountWithdrawn;
     }
 
-    uint blocksToRelease;  // How many block since since deposit will HEGIC be completely released.
-    mapping(address => Deposit) deposits;
-    mapping(address => bool) alreadyDeposited;
+    uint public immutable blocksToRelease;  // How many block since since deposit will HEGIC be completely released.
+    mapping(address => Deposit) public deposits;
+    mapping(address => bool) public alreadyDeposited;
 
-    ERC20 inputToken;
-    ERC20 outputToken;
+    ERC20 public immutable inputToken;
+    ERC20 public immutable outputToken;
 
     constructor(ERC20 _inputToken, ERC20 _outputToken, uint _blocksToRelease) {
         inputToken = _inputToken;
@@ -87,7 +87,7 @@ contract FakeHegicStakingPool is ERC20("Fake sHEGIC Token", "FakeSHEGIC") {
     using SafeMath for uint;
     using SafeERC20 for ERC20;
 
-    ERC20 inputToken;
+    ERC20 public immutable inputToken;
 
     constructor(ERC20 _inputToken) {
         inputToken = _inputToken;
