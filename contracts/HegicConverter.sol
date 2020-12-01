@@ -11,100 +11,152 @@ import "./MockUpContracts.sol";
 /**
  * @author Larrypc
  * @title Hegic Converter
- * @notice Pools Hegic IOU token (rHEGIC) together and deposits to the rHEGIC <> HEGIC
- * vesting contract; withdraws HEGIC and deposits to jmonteer's staking pool at
+ * @notice Pools HegicIOUToken (rHEGIC) together and deposits to the rHEGIC <> HEGIC
+ * redemption contract; withdraws HEGIC and deposits to jmonteer's HegicStakingPool at
  * regular intervals.
  */
 contract HegicConverter is Ownable, ERC20("HEGIC Converter Token", "convHEGIC") {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
+    struct DepositData {
+        uint amountDeposited;
+        uint amountWithdrawn;
+    }
+
     IERC20 public immutable HEGIC;
     IERC20 public immutable rHEGIC;
-    // HegicStakingPool public immutable sHEGIC;
-    FakeHegicStakingPool public immutable sHEGIC;
-    IOUTokenRedemption public immutable vesting;
+    FakeHegicStakingPool public immutable sHEGIC;  // Change this when deploying!!!
+    IOUTokenRedemption public immutable redemption;
 
-    bool depositAllowed = true;
-    address[] depositors;
+    uint public feeRate = 100;  // 1%
+    address public feeRecipient;
+
+    bool public allowDeposit = true;
+    bool public allowClaimRefund = true;
+
+    mapping(address => DepositData) public depositData;
 
     event Deposited(address account, uint amount);
-    event Withdrawn(address account, uint amount);
+    event RefundClaimed(address account, uint amount);
+    event Withdrawn(address account, uint amountAfterFee, uint fee);
 
-    constructor(
-        IERC20 _HEGIC,
-        IERC20 _rHEGIC,
-        // HegicStakingPool _sHEGIC,
-        FakeHegicStakingPool _sHEGIC,
-        IOUTokenRedemption _vesting
-    ) {
+    constructor(IERC20 _HEGIC, IERC20 _rHEGIC, FakeHegicStakingPool _sHEGIC, IOUTokenRedemption _redemption) {
         HEGIC = _HEGIC;
         rHEGIC = _rHEGIC;
         sHEGIC = _sHEGIC;
-        vesting = _vesting;
+        redemption = _redemption;
+        feeRecipient = msg.sender;
     }
 
     /**
-     * @notice Deposits _amount rHEGIC to the contract.
-     * @param _amount Amount of rHEGIC to be deposited // amount of convHEGIC to
+     * @notice Set the fee rate users are charged upon withdrawal.
+     * @param _feeRate The new rate in basis points. E.g. 200 = 2%
+     */
+    function setFeeRate(uint _feeRate) public onlyOwner {
+        require(_feeRate >= 0, "Rate too low!");
+        require(_feeRate <= 500, "Rate too high!");  // Owner can charge no more than 5%
+        feeRate = _feeRate;
+    }
+
+    function setFeeRecipient(address _feeRecipient) public onlyOwner {
+        require(_feeRecipient != address(0), "Cannot set recipient to zero address");
+        feeRecipient = _feeRecipient;
+    }
+
+    /**
+     * @notice Deposits a given amount of rHEGIC to the contract.
+     * @param amount Amount of rHEGIC to be deposited, i.e. amount of convHEGIC to
      * be minted
      */
-    function deposit(uint _amount) external {
-        require(depositAllowed, "New deposits no longer accepted");
-        require(_amount > 0, "Amount must be greater than zero");
+    function deposit(uint amount) public {
+        require(allowDeposit, "New deposits no longer accepted");
+        require(amount > 0, "Amount must be greater than zero");
 
-        rHEGIC.safeTransferFrom(msg.sender, address(this), _amount);
-        depositors.push(msg.sender);
-        _mint(msg.sender, _amount);
+        rHEGIC.safeTransferFrom(msg.sender, address(this), amount);
+        _mint(msg.sender, amount);
 
-        emit Deposited(msg.sender, _amount);
+        depositData[msg.sender].amountDeposited += amount;
+
+        emit Deposited(msg.sender, amount);
+    }
+
+    /**
+     * @notice Claim a refund of rHEGIC before they are deposited to the redemption
+     * contract. The developer will notify users to do this if the project fails
+     * to attract enough deposit.
+     */
+    function claimRefund() public onlyOwner {
+        uint amount = depositData[msg.sender].amountDeposited;
+
+        require(amount > 0, "User has not deposited any fund");
+        require(allowClaimRefund, "Funde are already deposited to the redemption contract");
+
+        rHEGIC.safeTransfer(address(this), amount);
+        _burn(msg.sender, amount);
+
+        emit RefundClaimed(msg.sender, amount);
+    }
+
+    /**
+     * @notice Deposit all rHEGIC to the redemption contract. Once this is executed,
+     * no new deposit will be accepted, and users will not be able to claim rHEGIC refund.
+     */
+    function depositToRedemptionContract() public onlyOwner {
+        uint rHegicBalance = rHEGIC.balanceOf(address(this));
+        require(rHegicBalance > 0, "No rHEGIC token to deposit");
+
+        allowDeposit = false;
+        allowClaimRefund = false;
+
+        redemption.deposit(rHegicBalance);  //...
+    }
+
+    /**
+     * @notice Redeem the maximum possible amount of rHEGIC to HEGIC, then stake
+     * in the sHEGIC contract. The developer will call this at regular intervals.
+     * Anyone can call this as well, albeit no benefit.
+     */
+    function redeemAndStake() public {
+        uint amount = redemption.withdraw(); //...
+        HEGIC.approve(address(sHEGIC), amount);
+        sHEGIC.deposit(amount);
+    }
+
+    /**
+     * @notice Calculate the maximum amount of sHEGIC token available for withdrawable
+     * by a user.
+     * @param account The user's account address
+     */
+    function getUserWithdrawableAmount(address account) public view returns (uint withdrawableAmount) {
+        uint sHegicAvailable = sHEGIC.balanceOf(address(this));
+        uint userTotalWithdrawable = depositData[account].amountDeposited;
+        uint userAlreadyWithdrawn = depositData[account].amountWithdrawn;
+
+        withdrawableAmount = userTotalWithdrawable.sub(userAlreadyWithdrawn);
+        if (sHegicAvailable < withdrawableAmount) {
+            withdrawableAmount = sHegicAvailable;
+        }
     }
 
     /**
      * @notice Withdraw all available sHEGIC claimable by the user.
      */
-    function withdrawStakedHEGIC(uint _amount) external {
-        require(_amount > 0, "Amount must be greater than zero");
+    function withdrawStakedHEGIC() public {
+        uint amount = getUserWithdrawableAmount(msg.sender);
+        require(amount > 0, "No sHEGIC token available for withdrawal");
 
-        uint totalSHegicBalance = sHEGIC.balanceOf(address(this));
-        uint userShare = totalSHegicBalance.mul(_amount).div(totalSupply());
+        uint fee = amount.mul(feeRate).div(10000);
+        uint amountAfterFee = amount.sub(fee);
 
-        sHEGIC.transfer(msg.sender, userShare);
-        _burn(msg.sender, userShare);
+        sHEGIC.transfer(msg.sender, amountAfterFee);
+        _burn(msg.sender, amount);
+        depositData[msg.sender].amountWithdrawn += amount;
 
-        emit Withdrawn(msg.sender, userShare);
-    }
-
-    /**
-     * @notice Deposit all rHEGIC to the vesting contract, and disallow any new
-     * rHEGIC deposits.
-     */
-    function depositToVestingContract() public onlyOwner {
-        uint rHegicBalance = rHEGIC.balanceOf(address(this));
-        require(rHegicBalance > 0, "No rHEGIC token to deposit");
-
-        vesting.deposit(rHegicBalance);  //...
-
-        depositAllowed = false;
-    }
-
-    /**
-     * @notice Convert the maximum possible amount of rHEGIC to HEGIC, then deposit
-     * to sHEGIC contract.
-     */
-    function convertAndStake() public {
-        uint amount = vesting.withdraw(); //...
-        sHEGIC.deposit(amount);
-    }
-
-    /**
-     * @notice Return all deposited rHEGIC to depositors. To be called when not
-     * enough deposits have been received.
-     */
-    function refund() public onlyOwner {
-        for ( uint i = 0; i < depositors.length; i++ ) {
-            rHEGIC.safeTransfer(depositors[i], balanceOf(depositors[i]));
-            _burn(depositors[i], balanceOf(depositors[i]));
+        if (fee > 0) {
+            sHEGIC.transfer(feeRecipient, fee);
         }
+
+        emit Withdrawn(msg.sender, amountAfterFee, fee);
     }
 }
