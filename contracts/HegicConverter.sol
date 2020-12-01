@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity 0.6.12;
+pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-import "./Interfaces/IHegicStakingPool.sol"; // HegicStaking.co by jmonteer
-import "./Interfaces/IVestingContract.sol";  // The upcoming rHEGIC <> HEGIC contract
+import "./MockUpContracts.sol";
 
 
 /**
  * @author Larrypc
  * @title Hegic Converter
- * @notice Pools Hegic IOU token (rHEGIC) together, deposits to the rHEGIC <> HEGIC
- * vesting contract, withdraws HEGIC and deposits to jmonteer's staking pool at
+ * @notice Pools Hegic IOU token (rHEGIC) together and deposits to the rHEGIC <> HEGIC
+ * vesting contract; withdraws HEGIC and deposits to jmonteer's staking pool at
  * regular intervals.
  */
 contract HegicConverter is Ownable, ERC20("HEGIC Converter Token", "convHEGIC") {
@@ -22,8 +21,9 @@ contract HegicConverter is Ownable, ERC20("HEGIC Converter Token", "convHEGIC") 
 
     IERC20 public immutable HEGIC;
     IERC20 public immutable rHEGIC;
-    IHegicStakingPool public immutable sHEGIC;
-    IVestingContract public immutable vesting;
+    // HegicStakingPool public immutable sHEGIC;
+    FakeHegicStakingPool public immutable sHEGIC;
+    IOUTokenRedemption public immutable vesting;
 
     bool depositAllowed = true;
     address[] depositors;
@@ -34,11 +34,10 @@ contract HegicConverter is Ownable, ERC20("HEGIC Converter Token", "convHEGIC") 
     constructor(
         IERC20 _HEGIC,
         IERC20 _rHEGIC,
-        IHegicStakingPool _sHEGIC,
-        IVestingContract _vesting
-    )
-        public
-    {
+        // HegicStakingPool _sHEGIC,
+        FakeHegicStakingPool _sHEGIC,
+        IOUTokenRedemption _vesting
+    ) {
         HEGIC = _HEGIC;
         rHEGIC = _rHEGIC;
         sHEGIC = _sHEGIC;
@@ -64,7 +63,7 @@ contract HegicConverter is Ownable, ERC20("HEGIC Converter Token", "convHEGIC") 
     /**
      * @notice Withdraw all available sHEGIC claimable by the user.
      */
-    function withdrawStakedHEGIC() external {
+    function withdrawStakedHEGIC(uint _amount) external {
         require(_amount > 0, "Amount must be greater than zero");
 
         uint totalSHegicBalance = sHEGIC.balanceOf(address(this));
@@ -94,11 +93,11 @@ contract HegicConverter is Ownable, ERC20("HEGIC Converter Token", "convHEGIC") 
      * to sHEGIC contract.
      */
     function convertAndStake() public {
-        uint convertableAmount = vesting.getConvertableAmount();  //...
+        uint withdrawableAmount = vesting.getWithdrawableAmount(msg.sender);  //...
 
-        vesting.tradeRHegicForHegic(convertableAmount); //...
+        vesting.withdraw(withdrawableAmount); //...
 
-        sHEGIC.deposit(convertableAmount);
+        sHEGIC.deposit(withdrawableAmount);
     }
 
     /**
@@ -108,7 +107,7 @@ contract HegicConverter is Ownable, ERC20("HEGIC Converter Token", "convHEGIC") 
     function refund() public onlyOwner {
         for ( uint i = 0; i < depositors.length; i++ ) {
             rHEGIC.safeTransfer(depositors[i], balanceOf(depositors[i]));
-            _burn(balanceOf(depositors));
+            _burn(depositors[i], balanceOf(depositors[i]));
         }
     }
 }
