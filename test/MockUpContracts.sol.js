@@ -4,17 +4,15 @@ const Web3 = require('web3');
 
 const web3 = new Web3(ganache.provider());
 const compiledContracts = require('../compile.js');
-const { deployContracts } = require('./utils.js');
-
+const { deployMockUpContracts } = require('./utils.js');
 
 var accounts;
 var contracts;
 
 beforeEach(async () => {
   accounts = await web3.eth.getAccounts();
-  contracts = await deployContracts(web3, compiledContracts, accounts[0]);
+  contracts = await deployMockUpContracts(web3, compiledContracts, accounts[0]);
 });
-
 
 describe('FakeHegicToken', () => {
   it('should mint the owner 100 token when deployed, and have 100 total supply', async () => {
@@ -46,14 +44,12 @@ describe('FakeHegicToken', () => {
   });
 });
 
-
 describe('FakeRHegicToken', () => {
   it('should deploy successfully', async () => {
     const { FakeRHegicTokenInstance } = contracts;
     assert(FakeRHegicTokenInstance, 'Contract object is null or undefined');
   });
 });
-
 
 describe('IOUTokenRedemption', () => {
   var FakeHegicTokenInstance;
@@ -142,7 +138,6 @@ describe('IOUTokenRedemption', () => {
     );
   });
 });
-
 
 describe('FakeHegicStakingPool', () => {
   it('should accept 50 HEGIC deposit and issue 50 sHEGIC back', async () => {

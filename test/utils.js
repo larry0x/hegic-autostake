@@ -1,4 +1,4 @@
-const deployContracts = async (web3, compiledContracts, deployer) => {
+const deployMockUpContracts = async (web3, compiledContracts, deployer) => {
   var { abi, evm } = compiledContracts['FakeHegicToken'];
   var FakeHegicTokenInstance = await new web3.eth.Contract(abi)
     .deploy({
@@ -55,4 +55,26 @@ const deployContracts = async (web3, compiledContracts, deployer) => {
   };
 };
 
-module.exports = { deployContracts };
+const deployAllContracts = async (web3, compiledContracts, deployer) => {
+  var mockUpContracts = await deployMockUpContracts(web3, compiledContracts, deployer);
+
+  var { abi, evm } = compiledContracts['HegicConverter'];
+  var HegicConverterInstance = await new web3.eth.Contract(abi)
+    .deploy({
+      data: evm.bytecode.object,
+      arguments: [
+        mockUpContracts.FakeHegicTokenInstance._address,
+        mockUpContracts.FakeRHegicTokenInstance._address,
+        mockUpContracts.FakeHegicStakingPoolInstance._address,
+        mockUpContracts.IOUTokenRedemptionInstance._address,
+      ]
+    })
+    .send({
+      from: deployer,
+      gas: '3500000'
+    });
+
+    return { HegicConverterInstance, ...mockUpContracts };
+}
+
+module.exports = { deployMockUpContracts, deployAllContracts };
