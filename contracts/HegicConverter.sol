@@ -93,11 +93,8 @@ contract HegicConverter is Ownable, ERC20("HEGIC Converter Token", "convHEGIC") 
      * to sHEGIC contract.
      */
     function convertAndStake() public {
-        uint withdrawableAmount = vesting.getWithdrawableAmount(msg.sender);  //...
-
-        vesting.withdraw(withdrawableAmount); //...
-
-        sHEGIC.deposit(withdrawableAmount);
+        uint amount = vesting.withdraw(); //...
+        sHEGIC.deposit(amount);
     }
 
     /**
