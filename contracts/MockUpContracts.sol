@@ -67,13 +67,10 @@ contract IOUTokenRedemption is Ownable {
         inputToken.safeTransferFrom(msg.sender, address(this), amount);
     }
 
-    function withdraw(uint amount) public {
-        require(amount <= getWithdrawableAmount(msg.sender));
-        outputToken.safeTransfer(msg.sender, amount);
-    }
-
-    function withdrawMaxAmount() public {
-        outputToken.safeTransfer(msg.sender, getWithdrawableAmount(msg.sender));
+    function withdraw() public {
+        uint withdrawable = getWithdrawableAmount(msg.sender);
+        outputToken.safeTransfer(msg.sender, withdrawable);
+        deposits[msg.sender].amountWithdrawn = amount;
     }
 
     function getWithdrawableAmount(address account) public view returns (uint withdrawable) {
