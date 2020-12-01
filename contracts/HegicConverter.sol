@@ -59,6 +59,10 @@ contract HegicConverter is Ownable, ERC20("HEGIC Converter Token", "convHEGIC") 
         feeRate = _feeRate;
     }
 
+    /**
+     * @notice Set the recipient address to fees generated.
+     * @param _feeRecipient The new recipient address
+     */
     function setFeeRecipient(address _feeRecipient) public onlyOwner {
         require(_feeRecipient != address(0), "Cannot set recipient to zero address");
         feeRecipient = _feeRecipient;
