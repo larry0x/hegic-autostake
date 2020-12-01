@@ -26,9 +26,9 @@ const deployContracts = async (web3, compiledContracts, deployer) => {
   .deploy({
     data: evm.bytecode.object,
     arguments: [
-      FakeHegicTokenInstance._address,
-      FakeRHegicTokenInstance._address,
-      40
+      FakeRHegicTokenInstance._address,  // _inputToken
+      FakeHegicTokenInstance._address,   // _outputToken
+      5
     ]
   })
   .send({

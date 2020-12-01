@@ -23,13 +23,14 @@ var input = {
   }
 };
 
-var { contracts } = JSON.parse(
+var output = JSON.parse(
   solc.compile(JSON.stringify(input), { import: findImports })
 );
+// console.log(output);
 
 module.exports = {
-  ...contracts['HegicConverter.sol'],
-  ...contracts['MockUpContracts.sol']
+  ...output.contracts['HegicConverter.sol'],
+  ...output.contracts['MockUpContracts.sol']
 };
 
 if (require.main == module) {
