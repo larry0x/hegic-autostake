@@ -15,7 +15,7 @@ import "./MockUpContracts.sol";
  * redemption contract; withdraws HEGIC and deposits to jmonteer's HegicStakingPool at
  * regular intervals.
  */
-contract HegicConverter is Ownable, ERC20("HEGIC Converter Token", "convHEGIC") {
+contract HegicConverter is Ownable {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
@@ -78,8 +78,6 @@ contract HegicConverter is Ownable, ERC20("HEGIC Converter Token", "convHEGIC") 
         require(amount > 0, "Amount must be greater than zero");
 
         rHEGIC.safeTransferFrom(msg.sender, address(this), amount);
-        _mint(msg.sender, amount);
-
         depositData[msg.sender].amountDeposited += amount;
 
         emit Deposited(msg.sender, amount);
@@ -97,7 +95,7 @@ contract HegicConverter is Ownable, ERC20("HEGIC Converter Token", "convHEGIC") 
         require(allowClaimRefund, "Funde are already deposited to the redemption contract");
 
         rHEGIC.safeTransfer(address(this), amount);
-        _burn(msg.sender, amount);
+        depositData[msg.sender].amountDeposited = 0;
 
         emit RefundClaimed(msg.sender, amount);
     }
@@ -154,7 +152,6 @@ contract HegicConverter is Ownable, ERC20("HEGIC Converter Token", "convHEGIC") 
         uint amountAfterFee = amount.sub(fee);
 
         sHEGIC.transfer(msg.sender, amountAfterFee);
-        _burn(msg.sender, amount);
         depositData[msg.sender].amountWithdrawn += amount;
 
         if (fee > 0) {
