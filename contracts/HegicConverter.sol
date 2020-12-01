@@ -94,7 +94,7 @@ contract HegicConverter is Ownable {
         require(amount > 0, "User has not deposited any fund");
         require(allowClaimRefund, "Funde are already deposited to the redemption contract");
 
-        rHEGIC.safeTransfer(address(this), amount);
+        rHEGIC.safeTransfer(msg.sender, amount);
         depositData[msg.sender].amountDeposited = 0;
 
         emit RefundClaimed(msg.sender, amount);
