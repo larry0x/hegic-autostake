@@ -7,22 +7,22 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 
-contract FakeHegicToken is ERC20("Fake HEGIC Token", "FakeHEGIC") {
+contract FakeHegicToken is ERC20("Fake HEGIC", "FakeHEGIC") {
     using SafeMath for uint;
     using SafeERC20 for ERC20;
 
     constructor() {
-        _mint(msg.sender, 100);
+        _mint(msg.sender, 100e18);
     }
 }
 
 
-contract FakeRHegicToken is ERC20("Fake rHEGIC Token", "FakeRHEGIC") {
+contract FakeRHegicToken is ERC20("Fake rHEGIC", "FakeRHEGIC") {
     using SafeMath for uint;
     using SafeERC20 for ERC20;
 
     constructor() {
-        _mint(msg.sender, 100);
+        _mint(msg.sender, 100e18);
     }
 }
 
@@ -77,13 +77,18 @@ contract IOUTokenRedemption is Ownable {
         uint blocksSinceDeposit = (block.number).sub(deposits[account].blockDeposited);
         withdrawable = (deposits[account].amountDeposited)
             .mul(blocksSinceDeposit)
-            .div(blocksToRelease)
-            .sub(deposits[account].amountRedeemed);
+            .div(blocksToRelease);
+
+        if (withdrawable > deposits[account].amountDeposited) {
+            withdrawable = deposits[account].amountDeposited;
+        }
+
+        withdrawable = withdrawable.sub(deposits[account].amountRedeemed);
     }
 }
 
 
-contract FakeHegicStakingPool is ERC20("Fake sHEGIC Token", "FakeSHEGIC") {
+contract FakeHegicStakingPool is ERC20("Fake sHEGIC", "FakeSHEGIC") {
     using SafeMath for uint;
     using SafeERC20 for ERC20;
 

@@ -1,6 +1,7 @@
 const assert = require('assert');
 const ganache = require('ganache-cli');
 const Web3 = require('web3');
+const toBN = Web3.utils.toBN;
 
 const web3 = new Web3(ganache.provider());
 const compiledContracts = require('../compile.js');
@@ -22,16 +23,16 @@ describe('HegicAutoStake', () => {
     } = contracts;
 
     await FakeRHegicTokenInstance.methods
-      .approve(HegicAutoStakeInstance._address, 50)
+      .approve(HegicAutoStakeInstance._address, toBN('50000000000000000000'))
       .send({ from: accounts[0], gas: 1500000 });
 
     await HegicAutoStakeInstance.methods
-      .deposit(50)
+      .deposit(toBN('50000000000000000000'))
       .send({ from: accounts[0], gas: 1500000 });
 
     // Don't forget to fund the redemption contract with FakeHEGIC
     await FakeHegicTokenInstance.methods
-      .transfer(IOUTokenRedemptionInstance._address, 100)
+      .transfer(IOUTokenRedemptionInstance._address, toBN('100000000000000000000'))
       .send({ from: accounts[0], gas: 1500000 });
   });
 
@@ -61,7 +62,11 @@ describe('HegicAutoStake', () => {
 
     const newFeeRecipient = await HegicAutoStakeInstance.methods
       .feeRecipient().call();
-    assert(newFeeRecipient == accounts[1], 'Fee recipient not correctly set to accounts[1]');
+
+    assert(
+      newFeeRecipient == accounts[1],
+      'Fee recipient not correctly set to accounts[1]'
+    );
   });
 
   it('should accept user deposit and correctly record data in state variable', async () => {
@@ -69,12 +74,18 @@ describe('HegicAutoStake', () => {
 
     const amountRHegicHeldByContract = await FakeRHegicTokenInstance.methods
       .balanceOf(HegicAutoStakeInstance._address).call();
+
     const depositData = await HegicAutoStakeInstance.methods
       .depositData(accounts[0]).call();
 
-    assert(amountRHegicHeldByContract == 50, 'Contract did not correctly receive 50 rHEGIC');
     assert(
-      depositData.amountDeposited == 50 && depositData.amountWithdrawn == 0,
+      toBN(amountRHegicHeldByContract).eq(toBN('50000000000000000000')),
+      'Contract did not correctly receive 50 rHEGIC'
+    );
+
+    assert(
+      toBN(depositData.amountDeposited).eq(toBN('50000000000000000000')) &&
+      toBN(depositData.amountWithdrawn).eq(toBN('0')),
       'Deposit data not correctly recorded in state variable'
     );
   });
@@ -88,8 +99,10 @@ describe('HegicAutoStake', () => {
 
     const amountRHegicHeldByUser = await FakeRHegicTokenInstance.methods
       .balanceOf(accounts[0]).call();
+
     const amountRHegicHeldByContract = await FakeRHegicTokenInstance.methods
       .balanceOf(HegicAutoStakeInstance._address).call();
+
     const depositData = await HegicAutoStakeInstance.methods
       .depositData(accounts[0]).call();
 
@@ -98,10 +111,15 @@ describe('HegicAutoStake', () => {
     // console.log('depositData.amountDeposited:', depositData.amountDeposited);
 
     assert(
-      amountRHegicHeldByUser == 100 && amountRHegicHeldByContract == 0,
+      toBN(amountRHegicHeldByUser).eq(toBN('100000000000000000000')) &&
+      toBN(amountRHegicHeldByContract).eq(toBN('0')),
       'Failed to correctly refund 50 rHEGIC to user'
     );
-    assert(depositData.amountDeposited == 0, 'State variable not updated correctly');
+
+    assert(
+      toBN(depositData.amountDeposited).eq(toBN('0')),
+      'State variable not updated correctly'
+    );
   });
 
   it('should correctly transfer rHEGIC to redemption contract', async () => {
@@ -117,11 +135,13 @@ describe('HegicAutoStake', () => {
 
     const balanceInConverterAfterDeposit = await FakeRHegicTokenInstance.methods
       .balanceOf(HegicAutoStakeInstance._address).call();
+
     const balanceInRedemptionAfterDeposit = await FakeRHegicTokenInstance.methods
       .balanceOf(IOUTokenRedemptionInstance._address).call();
 
     assert(
-      balanceInConverterAfterDeposit == 0 && balanceInRedemptionAfterDeposit == 50,
+      toBN(balanceInConverterAfterDeposit).eq(toBN('0')) &&
+      toBN(balanceInRedemptionAfterDeposit).eq(toBN('50000000000000000000')),
       'rHEGIC tokens not correctly transferred to redemption contract'
     );
   });
@@ -136,7 +156,7 @@ describe('HegicAutoStake', () => {
     var error = null;
     try {
       await HegicAutoStakeInstance.methods
-        .deposit(50)
+        .deposit(toBN('50000000000000000000'))
         .send({ from: accounts[0], gas: 1500000 });
     } catch (err) {
       error = err;
@@ -171,7 +191,11 @@ describe('HegicAutoStake', () => {
 
     const sHegicBalance = await FakeHegicStakingPoolInstance.methods
       .balanceOf(HegicAutoStakeInstance._address).call();
-    assert(sHegicBalance == 10, 'Converter is not correctly credited 10 sHEGIC');
+
+    assert(
+      toBN(sHegicBalance).eq(toBN('10000000000000000000')),
+      'Converter is not correctly credited 10 sHEGIC'
+    );
   });
 
   it('should let user withdraw fund and transfer fee to recipient', async () => {
@@ -181,24 +205,40 @@ describe('HegicAutoStake', () => {
       FakeHegicStakingPoolInstance
     } = contracts;
 
+    // Deposit 50 (small number) instead of 50e18 (big number) for convenience
+    await HegicAutoStakeInstance.methods
+      .claimRefund()
+      .send({ from: accounts[0], gas: 1500000 });
+
     // Add two more depositors to obfuscate the problem a bit more
     await FakeRHegicTokenInstance.methods
       .transfer(accounts[1], 25)
       .send({ from: accounts[0], gas: 1500000 });
+
     await FakeRHegicTokenInstance.methods
       .transfer(accounts[2], 7)
       .send({ from: accounts[0], gas: 1500000 });
 
     await FakeRHegicTokenInstance.methods
+      .approve(HegicAutoStakeInstance._address, 50)
+      .send({ from: accounts[0], gas: 1500000 });
+
+    await FakeRHegicTokenInstance.methods
       .approve(HegicAutoStakeInstance._address, 25)
-      .send({ from: accounts[1], gas: 1500000 });
-    await HegicAutoStakeInstance.methods
-      .deposit(25)
       .send({ from: accounts[1], gas: 1500000 });
 
     await FakeRHegicTokenInstance.methods
       .approve(HegicAutoStakeInstance._address, 7)
       .send({ from: accounts[2], gas: 1500000 });
+
+    await HegicAutoStakeInstance.methods
+      .deposit(50)
+      .send({ from: accounts[0], gas: 1500000 });
+
+    await HegicAutoStakeInstance.methods
+      .deposit(25)
+      .send({ from: accounts[1], gas: 1500000 });
+
     await HegicAutoStakeInstance.methods
       .deposit(7)
       .send({ from: accounts[2], gas: 1500000 });
@@ -216,10 +256,13 @@ describe('HegicAutoStake', () => {
 
     var depositorZeroWithdrawable = await HegicAutoStakeInstance.methods
       .getUserWithdrawableAmount(accounts[0]).call()
+
     var depositorOneWithdrawable = await HegicAutoStakeInstance.methods
       .getUserWithdrawableAmount(accounts[1]).call()
+
     var depositorTwoWithdrawable = await HegicAutoStakeInstance.methods
       .getUserWithdrawableAmount(accounts[2]).call()
+
     var nonDepositorWithdrawable = await HegicAutoStakeInstance.methods
       .getUserWithdrawableAmount(accounts[3]).call()
 
@@ -272,12 +315,14 @@ describe('HegicAutoStake', () => {
     await HegicAutoStakeInstance.methods
       .withdrawStakedHEGIC()
       .send({ from: accounts[0], gas: 1500000 });
+
     await HegicAutoStakeInstance.methods
       .withdrawStakedHEGIC()
       .send({ from: accounts[1], gas: 1500000 });
 
     const depositorZeroSHegicBalance = await FakeHegicStakingPoolInstance.methods
       .balanceOf(accounts[0]).call();
+
     depositorOneSHegicBalance = await FakeHegicStakingPoolInstance.methods
       .balanceOf(accounts[1]).call();
 
