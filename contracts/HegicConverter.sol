@@ -103,24 +103,27 @@ contract HegicConverter is Ownable {
     /**
      * @notice Deposit all rHEGIC to the redemption contract. Once this is executed,
      * no new deposit will be accepted, and users will not be able to claim rHEGIC refund.
+     * @return amount Amount of rHEGIC deposited
      */
-    function depositToRedemptionContract() public onlyOwner {
-        uint rHegicBalance = rHEGIC.balanceOf(address(this));
-        require(rHegicBalance > 0, "No rHEGIC token to deposit");
+    function depositToRedemptionContract() public onlyOwner returns (uint amount) {
+        amount = rHEGIC.balanceOf(address(this));
+        require(amount > 0, "No rHEGIC token to deposit");
 
         allowDeposit = false;
         allowClaimRefund = false;
 
-        redemption.deposit(rHegicBalance);  //...
+        rHEGIC.approve(address(redemption), amount);
+        redemption.deposit(amount);  //...
     }
 
     /**
      * @notice Redeem the maximum possible amount of rHEGIC to HEGIC, then stake
      * in the sHEGIC contract. The developer will call this at regular intervals.
      * Anyone can call this as well, albeit no benefit.
+     * @return amount Amount of HEGIC redeemed / sHEGIC staked in this transaction
      */
-    function redeemAndStake() public {
-        uint amount = redemption.withdraw(); //...
+    function redeemAndStake() public returns (uint amount) {
+        amount = redemption.redeem(); //...
         HEGIC.approve(address(sHEGIC), amount);
         sHEGIC.deposit(amount);
     }
