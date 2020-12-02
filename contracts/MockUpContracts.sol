@@ -8,9 +8,6 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 
 contract FakeHegicToken is ERC20("Fake HEGIC", "FakeHEGIC") {
-    using SafeMath for uint;
-    using SafeERC20 for ERC20;
-
     constructor() {
         _mint(msg.sender, 100e18);
     }
@@ -18,10 +15,13 @@ contract FakeHegicToken is ERC20("Fake HEGIC", "FakeHEGIC") {
 
 
 contract FakeRHegicToken is ERC20("Fake rHEGIC", "FakeRHEGIC") {
-    using SafeMath for uint;
-    using SafeERC20 for ERC20;
+    // Hardhat toolkit can't verify contracts on Etherscan if they have the same
+    // bytecodes. This variable is useless but it makes the fake rHEGIC's bytecode
+    // different from that of fake HEGIC's, so verification is a bit easier.
+    FakeHegicToken public immutable isAnIOUFor;
 
-    constructor() {
+    constructor(FakeHegicToken _isAnIOUFor) {
+        isAnIOUFor = _isAnIOUFor;
         _mint(msg.sender, 100e18);
     }
 }

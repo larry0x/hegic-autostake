@@ -14,7 +14,7 @@ const deployMockUpContracts = async (web3, compiledContracts, deployer) => {
   var FakeRHegicTokenInstance = await new web3.eth.Contract(abi)
     .deploy({
       data: evm.bytecode.object,
-      arguments: []
+      arguments: [ FakeHegicTokenInstance._address ]
     })
     .send({
       from: deployer,

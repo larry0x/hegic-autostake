@@ -42,7 +42,7 @@ const deployToTestnet = async (web3, compiledContracts) => {
   result = await new web3.eth.Contract(FakeRHegicToken.abi)
     .deploy({
       data: FakeRHegicToken.evm.bytecode.object,
-      arguments: []
+      arguments: [ FakeHegicToken.address ]
     })
     .send({
       from: account,
