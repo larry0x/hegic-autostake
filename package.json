@@ -1,13 +1,10 @@
 {
-  "name": "hegic-converter",
+  "name": "hegic-autostake",
   "version": "1.0.0",
   "description": "",
-  "main": "truffle-config.js",
-  "directories": {
-    "test": "truffle test"
-  },
+  "main": "compile.js",
   "scripts": {
-    "test": "truffle test"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",

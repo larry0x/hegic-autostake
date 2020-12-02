@@ -10,12 +10,12 @@ import "./MockUpContracts.sol";
 
 /**
  * @author Larrypc
- * @title Hegic Converter
+ * @title HEGIC AutoStake
  * @notice Pools HegicIOUToken (rHEGIC) together and deposits to the rHEGIC <> HEGIC
  * redemption contract; withdraws HEGIC and deposits to jmonteer's HegicStakingPool at
  * regular intervals.
  */
-contract HegicConverter is Ownable {
+contract HegicAutoStake is Ownable {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 

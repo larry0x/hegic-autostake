@@ -58,8 +58,8 @@ const deployMockUpContracts = async (web3, compiledContracts, deployer) => {
 const deployAllContracts = async (web3, compiledContracts, deployer) => {
   var mockUpContracts = await deployMockUpContracts(web3, compiledContracts, deployer);
 
-  var { abi, evm } = compiledContracts['HegicConverter'];
-  var HegicConverterInstance = await new web3.eth.Contract(abi)
+  var { abi, evm } = compiledContracts['HegicAutoStake'];
+  var HegicAutoStakeInstance = await new web3.eth.Contract(abi)
     .deploy({
       data: evm.bytecode.object,
       arguments: [
@@ -74,7 +74,7 @@ const deployAllContracts = async (web3, compiledContracts, deployer) => {
       gas: '3500000'
     });
 
-    return { HegicConverterInstance, ...mockUpContracts };
+    return { HegicAutoStakeInstance, ...mockUpContracts };
 }
 
 module.exports = { deployMockUpContracts, deployAllContracts };

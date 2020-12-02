@@ -9,7 +9,7 @@ const { deployAllContracts } = require('./utils.js');
 var accounts;
 var contracts;
 
-describe('HegicConverter', () => {
+describe('HegicAutoStake', () => {
   beforeEach(async () => {
     accounts = await web3.eth.getAccounts();
     contracts = await deployAllContracts(web3, compiledContracts, accounts[0]);
@@ -17,15 +17,15 @@ describe('HegicConverter', () => {
     const {
       FakeHegicTokenInstance,
       FakeRHegicTokenInstance,
-      HegicConverterInstance ,
+      HegicAutoStakeInstance ,
       IOUTokenRedemptionInstance
     } = contracts;
 
     await FakeRHegicTokenInstance.methods
-      .approve(HegicConverterInstance._address, 50)
+      .approve(HegicAutoStakeInstance._address, 50)
       .send({ from: accounts[0], gas: 1500000 });
 
-    await HegicConverterInstance.methods
+    await HegicAutoStakeInstance.methods
       .deposit(50)
       .send({ from: accounts[0], gas: 1500000 });
 
@@ -36,40 +36,40 @@ describe('HegicConverter', () => {
   });
 
   it('should deploy successfully', async () => {
-    const { HegicConverterInstance } = contracts;
-    assert(HegicConverterInstance, 'Contract object is null or undefined');
+    const { HegicAutoStakeInstance } = contracts;
+    assert(HegicAutoStakeInstance, 'Contract object is null or undefined');
   });
 
   it('should set fee rate correctly', async () => {
-    const { HegicConverterInstance } = contracts;
+    const { HegicAutoStakeInstance } = contracts;
 
-    await HegicConverterInstance.methods
+    await HegicAutoStakeInstance.methods
       .setFeeRate(500)
       .send({ from: accounts[0], gas: 1500000 });
 
-    const newFeeRate = await HegicConverterInstance.methods
+    const newFeeRate = await HegicAutoStakeInstance.methods
       .feeRate().call();
     assert(newFeeRate == 500, 'Fee rate not correctly set to 500');
   });
 
   it('should set fee recipient correctly', async () => {
-    const { HegicConverterInstance } = contracts;
+    const { HegicAutoStakeInstance } = contracts;
 
-    await HegicConverterInstance.methods
+    await HegicAutoStakeInstance.methods
       .setFeeRecipient(accounts[1])
       .send({ from: accounts[0], gas: 1500000 });
 
-    const newFeeRecipient = await HegicConverterInstance.methods
+    const newFeeRecipient = await HegicAutoStakeInstance.methods
       .feeRecipient().call();
     assert(newFeeRecipient == accounts[1], 'Fee recipient not correctly set to accounts[1]');
   });
 
   it('should accept user deposit and correctly record data in state variable', async () => {
-    const { FakeRHegicTokenInstance, HegicConverterInstance } = contracts;
+    const { FakeRHegicTokenInstance, HegicAutoStakeInstance } = contracts;
 
     const amountRHegicHeldByContract = await FakeRHegicTokenInstance.methods
-      .balanceOf(HegicConverterInstance._address).call();
-    const depositData = await HegicConverterInstance.methods
+      .balanceOf(HegicAutoStakeInstance._address).call();
+    const depositData = await HegicAutoStakeInstance.methods
       .depositData(accounts[0]).call();
 
     assert(amountRHegicHeldByContract == 50, 'Contract did not correctly receive 50 rHEGIC');
@@ -80,17 +80,17 @@ describe('HegicConverter', () => {
   });
 
   it('should allow user to claim refund and update state variable accordingly', async () => {
-    const { FakeRHegicTokenInstance, HegicConverterInstance } = contracts;
+    const { FakeRHegicTokenInstance, HegicAutoStakeInstance } = contracts;
 
-    await HegicConverterInstance.methods
+    await HegicAutoStakeInstance.methods
       .claimRefund()
       .send({ from: accounts[0], gas: 1500000 });
 
     const amountRHegicHeldByUser = await FakeRHegicTokenInstance.methods
       .balanceOf(accounts[0]).call();
     const amountRHegicHeldByContract = await FakeRHegicTokenInstance.methods
-      .balanceOf(HegicConverterInstance._address).call();
-    const depositData = await HegicConverterInstance.methods
+      .balanceOf(HegicAutoStakeInstance._address).call();
+    const depositData = await HegicAutoStakeInstance.methods
       .depositData(accounts[0]).call();
 
     // console.log('amountRHegicHeldByUser:', amountRHegicHeldByUser);
@@ -107,16 +107,16 @@ describe('HegicConverter', () => {
   it('should correctly transfer rHEGIC to redemption contract', async () => {
     const {
       FakeRHegicTokenInstance,
-      HegicConverterInstance,
+      HegicAutoStakeInstance,
       IOUTokenRedemptionInstance
     } = contracts;
 
-    await HegicConverterInstance.methods
+    await HegicAutoStakeInstance.methods
       .depositToRedemptionContract()
       .send({ from: accounts[0], gas: 1500000 });
 
     const balanceInConverterAfterDeposit = await FakeRHegicTokenInstance.methods
-      .balanceOf(HegicConverterInstance._address).call();
+      .balanceOf(HegicAutoStakeInstance._address).call();
     const balanceInRedemptionAfterDeposit = await FakeRHegicTokenInstance.methods
       .balanceOf(IOUTokenRedemptionInstance._address).call();
 
@@ -127,15 +127,15 @@ describe('HegicConverter', () => {
   });
 
   it('should reject deposits and refunds after deposited to redemption contract', async () => {
-    const { HegicConverterInstance } = contracts;
+    const { HegicAutoStakeInstance } = contracts;
 
-    await HegicConverterInstance.methods
+    await HegicAutoStakeInstance.methods
       .depositToRedemptionContract()
       .send({ from: accounts[0], gas: 1500000 });
 
     var error = null;
     try {
-      await HegicConverterInstance.methods
+      await HegicAutoStakeInstance.methods
         .deposit(50)
         .send({ from: accounts[0], gas: 1500000 });
     } catch (err) {
@@ -146,7 +146,7 @@ describe('HegicConverter', () => {
 
     error = null;
     try {
-      await HegicConverterInstance.methods
+      await HegicAutoStakeInstance.methods
         .claimRefund()
         .send({ from: accounts[0], gas: 1500000 });
     } catch (err) {
@@ -157,27 +157,27 @@ describe('HegicConverter', () => {
   });
 
   it('should correctly redeem HEGIC and depoist to staking pool', async () => {
-    const { HegicConverterInstance, FakeHegicStakingPoolInstance } = contracts;
+    const { HegicAutoStakeInstance, FakeHegicStakingPoolInstance } = contracts;
 
-    await HegicConverterInstance.methods
+    await HegicAutoStakeInstance.methods
       .depositToRedemptionContract()
       .send({ from: accounts[0], gas: 1500000 });
 
     // This will advance 1 block number, so amount should be
     // amountDeposited * 1 / blocksToRelease = 50 * 1 / 5 = 10
-    await HegicConverterInstance.methods
+    await HegicAutoStakeInstance.methods
       .redeemAndStake()
       .send({ from: accounts[0], gas: 1500000 });
 
     const sHegicBalance = await FakeHegicStakingPoolInstance.methods
-      .balanceOf(HegicConverterInstance._address).call();
+      .balanceOf(HegicAutoStakeInstance._address).call();
     assert(sHegicBalance == 10, 'Converter is not correctly credited 10 sHEGIC');
   });
 
   it('should let user withdraw fund and transfer fee to recipient', async () => {
     const {
       FakeRHegicTokenInstance,
-      HegicConverterInstance,
+      HegicAutoStakeInstance,
       FakeHegicStakingPoolInstance
     } = contracts;
 
@@ -190,37 +190,37 @@ describe('HegicConverter', () => {
       .send({ from: accounts[0], gas: 1500000 });
 
     await FakeRHegicTokenInstance.methods
-      .approve(HegicConverterInstance._address, 25)
+      .approve(HegicAutoStakeInstance._address, 25)
       .send({ from: accounts[1], gas: 1500000 });
-    await HegicConverterInstance.methods
+    await HegicAutoStakeInstance.methods
       .deposit(25)
       .send({ from: accounts[1], gas: 1500000 });
 
     await FakeRHegicTokenInstance.methods
-      .approve(HegicConverterInstance._address, 7)
+      .approve(HegicAutoStakeInstance._address, 7)
       .send({ from: accounts[2], gas: 1500000 });
-    await HegicConverterInstance.methods
+    await HegicAutoStakeInstance.methods
       .deposit(7)
       .send({ from: accounts[2], gas: 1500000 });
 
-    await HegicConverterInstance.methods
+    await HegicAutoStakeInstance.methods
       .depositToRedemptionContract()
       .send({ from: accounts[0], gas: 1500000 });
 
     // A total of 50 + 25 + 7 = 82 rHEGIC tokens was added to redemption contract
     // One block have passed, so redeemable amount is 82 * 1 / 5 = 16 tokens
     // The three depositors can claim 16, 16, 7 tokens, respectively.
-    await HegicConverterInstance.methods
+    await HegicAutoStakeInstance.methods
       .redeemAndStake()
       .send({ from: accounts[0], gas: 1500000 });
 
-    var depositorZeroWithdrawable = await HegicConverterInstance.methods
+    var depositorZeroWithdrawable = await HegicAutoStakeInstance.methods
       .getUserWithdrawableAmount(accounts[0]).call()
-    var depositorOneWithdrawable = await HegicConverterInstance.methods
+    var depositorOneWithdrawable = await HegicAutoStakeInstance.methods
       .getUserWithdrawableAmount(accounts[1]).call()
-    var depositorTwoWithdrawable = await HegicConverterInstance.methods
+    var depositorTwoWithdrawable = await HegicAutoStakeInstance.methods
       .getUserWithdrawableAmount(accounts[2]).call()
-    var nonDepositorWithdrawable = await HegicConverterInstance.methods
+    var nonDepositorWithdrawable = await HegicAutoStakeInstance.methods
       .getUserWithdrawableAmount(accounts[3]).call()
 
     // console.log('depositorZeroWithdrawable:', depositorZeroWithdrawable);
@@ -237,12 +237,12 @@ describe('HegicConverter', () => {
     );
 
     // Should withdraw 7 sHEGIC, 16 - 7 = 9 remaining
-    await HegicConverterInstance.methods
+    await HegicAutoStakeInstance.methods
       .withdrawStakedHEGIC()
       .send({ from: accounts[2], gas: 1500000 });
 
     // Should withdraw 9 sHEGIC, zero remaining
-    await HegicConverterInstance.methods
+    await HegicAutoStakeInstance.methods
       .withdrawStakedHEGIC()
       .send({ from: accounts[1], gas: 1500000 });
 
@@ -265,14 +265,14 @@ describe('HegicConverter', () => {
       .send({ from: accounts[0], gas: 1500000 });
 
     // 5 blocks passed, all HEGIC should be released at this point
-    await HegicConverterInstance.methods
+    await HegicAutoStakeInstance.methods
       .redeemAndStake()
       .send({ from: accounts[0], gas: 1500000 });
 
-    await HegicConverterInstance.methods
+    await HegicAutoStakeInstance.methods
       .withdrawStakedHEGIC()
       .send({ from: accounts[0], gas: 1500000 });
-    await HegicConverterInstance.methods
+    await HegicAutoStakeInstance.methods
       .withdrawStakedHEGIC()
       .send({ from: accounts[1], gas: 1500000 });
 

@@ -1,7 +1,7 @@
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 const Web3 = require("web3");
 
-// Use environment variables to provide private key and RPL URL:
+// Use environment variables to provide private key and RPC URL:
 //
 // PRIVATE_KEY=... RPC_URL=... node deploy.js
 //
@@ -17,7 +17,7 @@ const deployToTestnet = async (web3, compiledContracts) => {
     FakeRHegicToken,
     FakeHegicStakingPool,
     IOUTokenRedemption,
-    HegicConverter,
+    HegicAutoStake,
   } = compiledContracts;
 
   // Get account
@@ -80,10 +80,10 @@ const deployToTestnet = async (web3, compiledContracts) => {
   IOUTokenRedemption.address = result.options.address;
   console.log('Deployed IOUTokenRedemption at', IOUTokenRedemption.address);
 
-  // HEGIC Converter
-  result = await new web3.eth.Contract(HegicConverter.abi)
+  // HegicAutoStake
+  result = await new web3.eth.Contract(HegicAutoStake.abi)
     .deploy({
-      data: HegicConverter.evm.bytecode.object,
+      data: HegicAutoStake.evm.bytecode.object,
       arguments: [
         FakeHegicToken.address,
         FakeRHegicToken.address,
@@ -96,8 +96,8 @@ const deployToTestnet = async (web3, compiledContracts) => {
       gas: 3500000
     });
 
-  HegicConverter.address = result.options.address;
-  console.log('Deployed HegicConverter at', HegicConverter.address);
+  HegicAutoStake.address = result.options.address;
+  console.log('Deployed HegicAutoStake at', HegicAutoStake.address);
 
   process.exit(0);  // The script won't exit by itself for some reason
 };

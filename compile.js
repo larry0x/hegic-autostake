@@ -9,8 +9,8 @@ function findImports(_path) {
 var input = {
   language: 'Solidity',
   sources: {
-    'HegicConverter.sol': {
-      content: fs.readFileSync(path.resolve(__dirname, 'contracts/HegicConverter.sol'), 'utf8')
+    'HegicAutoStake.sol': {
+      content: fs.readFileSync(path.resolve(__dirname, 'contracts/HegicAutoStake.sol'), 'utf8')
     },
     'MockUpContracts.sol': {
       content: fs.readFileSync(path.resolve(__dirname, 'contracts/MockUpContracts.sol'), 'utf8')
@@ -29,7 +29,7 @@ var output = JSON.parse(
 // console.log(output);
 
 module.exports = {
-  ...output.contracts['HegicConverter.sol'],
+  ...output.contracts['HegicAutoStake.sol'],
   ...output.contracts['MockUpContracts.sol']
 };
 
