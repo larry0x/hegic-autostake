@@ -5,7 +5,7 @@ const Web3 = require("web3");
 //
 // PRIVATE_KEY=... RPC_URL=... node deploy.js
 //
-// If using Ganache:
+// If using ganache-cli:
 //
 // PRIVATE_KEY="copyFromGanacheCLI" RPL_URL=http://127.0.0.1:8545 node deploy.js
 //
@@ -36,7 +36,7 @@ const deployToTestnet = async (web3, compiledContracts) => {
     });
 
   FakeHegicToken.address = result.options.address;
-  console.log('Successfully deployed FakeHegicToken at', FakeHegicToken.address);
+  console.log('Deployed FakeHegicToken at', FakeHegicToken.address);
 
   // Fake rHEGIC Token
   result = await new web3.eth.Contract(FakeRHegicToken.abi)
@@ -50,7 +50,7 @@ const deployToTestnet = async (web3, compiledContracts) => {
     });
 
   FakeRHegicToken.address = result.options.address;
-  console.log('Successfully deployed FakeRHegicToken at', FakeRHegicToken.address);
+  console.log('Deployed FakeRHegicToken at', FakeRHegicToken.address);
 
   // Fake HEGIC Staking Pool (sHEGIC)
   result = await new web3.eth.Contract(FakeHegicStakingPool.abi)
@@ -64,7 +64,7 @@ const deployToTestnet = async (web3, compiledContracts) => {
     });
 
   FakeHegicStakingPool.address = result.options.address;
-  console.log('Successfully deployed FakeHegicStakingPool at', FakeHegicStakingPool.address);
+  console.log('Deployed FakeHegicStakingPool at', FakeHegicStakingPool.address);
 
   // IOU Token Redemption. 120 blocks ~= 30 min
   result = await new web3.eth.Contract(IOUTokenRedemption.abi)
@@ -78,7 +78,7 @@ const deployToTestnet = async (web3, compiledContracts) => {
     });
 
   IOUTokenRedemption.address = result.options.address;
-  console.log('Successfully deployed IOUTokenRedemption at', IOUTokenRedemption.address);
+  console.log('Deployed IOUTokenRedemption at', IOUTokenRedemption.address);
 
   // HEGIC Converter
   result = await new web3.eth.Contract(HegicConverter.abi)
@@ -97,7 +97,7 @@ const deployToTestnet = async (web3, compiledContracts) => {
     });
 
   HegicConverter.address = result.options.address;
-  console.log('Successfully deployed HegicConverter at', HegicConverter.address);
+  console.log('Deployed HegicConverter at', HegicConverter.address);
 
   process.exit(0);  // The script won't exit by itself for some reason
 };
