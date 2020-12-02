@@ -34,7 +34,7 @@ contract IOUTokenRedemption is Ownable {
     struct Deposit {
         uint blockDeposited;
         uint amountDeposited;
-        uint amountWithdrawn;
+        uint amountRedeemed;
     }
 
     uint public immutable blocksToRelease;  // How many block since since deposit will HEGIC be completely released.
@@ -61,24 +61,24 @@ contract IOUTokenRedemption is Ownable {
         deposits[msg.sender] = Deposit({
             blockDeposited: block.number,
             amountDeposited: amount,
-            amountWithdrawn: 0
+            amountRedeemed: 0
         });
 
         inputToken.safeTransferFrom(msg.sender, address(this), amount);
     }
 
-    function withdraw() public returns (uint amount) {
-        amount = getWithdrawableAmount(msg.sender);
+    function redeem() public returns (uint amount) {
+        amount = getRedeemableAmount(msg.sender);
         outputToken.safeTransfer(msg.sender, amount);
-        deposits[msg.sender].amountWithdrawn += amount;
+        deposits[msg.sender].amountRedeemed += amount;
     }
 
-    function getWithdrawableAmount(address account) public view returns (uint withdrawable) {
+    function getRedeemableAmount(address account) public view returns (uint withdrawable) {
         uint blocksSinceDeposit = (block.number).sub(deposits[account].blockDeposited);
         withdrawable = (deposits[account].amountDeposited)
             .mul(blocksSinceDeposit)
             .div(blocksToRelease)
-            .sub(deposits[account].amountWithdrawn);
+            .sub(deposits[account].amountRedeemed);
     }
 }
 

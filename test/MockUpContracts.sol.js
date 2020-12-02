@@ -102,27 +102,27 @@ describe('IOUTokenRedemption', () => {
     assert.ok(error, 'Failed to reject user\'s 2nd deposit');
   });
 
-  it('should correctly calculate withdrawable amount', async () => {
+  it('should correctly calculate redeemable amount', async () => {
     const currentBlock = await web3.eth.getBlockNumber();
     const blockDeposited = (await IOUTokenRedemptionInstance.methods
       .deposits(accounts[0]).call()).blockDeposited;
     const blocksToRelease = await IOUTokenRedemptionInstance.methods
       .blocksToRelease().call();
-    const withdrawableAmount = await IOUTokenRedemptionInstance.methods
-      .getWithdrawableAmount(accounts[0]).call();
+    const redeemableAmount = await IOUTokenRedemptionInstance.methods
+      .getRedeemableAmount(accounts[0]).call();
 
     assert(
-      withdrawableAmount == 50 * (currentBlock - blockDeposited) / blocksToRelease,
-      'Withdrawable amount not accurately calculated'
+      redeemableAmount == 50 * (currentBlock - blockDeposited) / blocksToRelease,
+      'Redeemable amount not accurately calculated'
     );
   });
 
-  it('should calculate withdrawable amount accurately and transfer to user', async () => {
+  it('should calculate redeemable amount accurately and transfer to user', async () => {
     const hegicBalanceBefore = await FakeHegicTokenInstance.methods
       .balanceOf(accounts[0]).call();
 
     await IOUTokenRedemptionInstance.methods
-      .withdraw().send({ from: accounts[0], gas: 1500000 });
+      .redeem().send({ from: accounts[0], gas: 1500000 });
 
     const hegicBalanceAfter = await FakeHegicTokenInstance.methods
       .balanceOf(accounts[0]).call();
@@ -133,8 +133,8 @@ describe('IOUTokenRedemption', () => {
     const depositData = await IOUTokenRedemptionInstance.methods
       .deposits(accounts[0]).call();
     assert(
-      depositData.amountWithdrawn == hegicBalanceChange,
-      'Withdrawn amount not correctly recorded'
+      depositData.amountRedeemed == hegicBalanceChange,
+      'Redeemed amount not correctly recorded'
     );
   });
 });
