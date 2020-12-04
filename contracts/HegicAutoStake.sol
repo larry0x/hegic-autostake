@@ -35,6 +35,10 @@ contract HegicAutoStake is Ownable {
     bool public allowDeposit = true;
     bool public allowClaimRefund = true;
 
+    uint public totalDepositors = 0;
+    uint public totalDepositReceived = 0;
+    uint public totalRedeemed = 0;
+
     mapping(address => DepositData) public depositData;
 
     event Deposited(address account, uint amount);
@@ -76,6 +80,11 @@ contract HegicAutoStake is Ownable {
     function deposit(uint amount) public {
         require(allowDeposit, "New deposits no longer accepted");
         require(amount > 0, "Amount must be greater than zero");
+
+        if (depositData[msg.sender].amountDeposited == 0) {
+            totalDepositors += 1;
+        }
+        totalDepositReceived += amount;
 
         rHEGIC.safeTransferFrom(msg.sender, address(this), amount);
         depositData[msg.sender].amountDeposited += amount;
@@ -126,6 +135,15 @@ contract HegicAutoStake is Ownable {
         amount = redemption.redeem(); //...
         HEGIC.approve(address(sHEGIC), amount);
         sHEGIC.deposit(amount);
+
+        totalRedeemed += amount;
+    }
+    
+    /**
+     * @notice Get the total amount of withdrawable sHEGIC held in contract.
+     */
+    function getTotalWithdrawableAmount() public view returns (uint withdrawableAmount) {
+        withdrawableAmount = sHEGIC.balanceOf(address(this));
     }
 
     /**
@@ -134,7 +152,7 @@ contract HegicAutoStake is Ownable {
      * @param account The user's account address
      */
     function getUserWithdrawableAmount(address account) public view returns (uint withdrawableAmount) {
-        uint sHegicAvailable = sHEGIC.balanceOf(address(this));
+        uint sHegicAvailable = getTotalWithdrawableAmount();
         uint userTotalWithdrawable = depositData[account].amountDeposited;
         uint userAlreadyWithdrawn = depositData[account].amountWithdrawn;
 

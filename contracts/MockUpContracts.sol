@@ -7,14 +7,18 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 
-contract FakeHegicToken is ERC20("Fake HEGIC", "FakeHEGIC") {
+contract FakeHegicToken is Ownable, ERC20("Fake HEGIC", "FakeHEGIC") {
     constructor() {
         _mint(msg.sender, 100e18);
+    }
+
+    function mint(uint amount) public onlyOwner {
+        _mint(msg.sender, amount);
     }
 }
 
 
-contract FakeRHegicToken is ERC20("Fake rHEGIC", "FakeRHEGIC") {
+contract FakeRHegicToken is Ownable, ERC20("Fake rHEGIC", "FakeRHEGIC") {
     // Hardhat toolkit can't verify contracts on Etherscan if they have the same
     // bytecodes. This variable is useless but it makes the fake rHEGIC's bytecode
     // different from that of fake HEGIC's, so verification is a bit easier.
@@ -23,6 +27,10 @@ contract FakeRHegicToken is ERC20("Fake rHEGIC", "FakeRHEGIC") {
     constructor(FakeHegicToken _isAnIOUFor) {
         isAnIOUFor = _isAnIOUFor;
         _mint(msg.sender, 100e18);
+    }
+
+    function mint(uint amount) public onlyOwner {
+        _mint(msg.sender, amount);
     }
 }
 
