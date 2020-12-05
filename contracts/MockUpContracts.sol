@@ -12,25 +12,27 @@ contract FakeHegicToken is Ownable, ERC20("Fake HEGIC", "FakeHEGIC") {
         _mint(msg.sender, 100e18);
     }
 
-    function mint(uint amount) public onlyOwner {
+    function mint(uint amount) external onlyOwner {
         _mint(msg.sender, amount);
+    }
+
+    function getTokenName() external pure returns (string memory) {
+        return "Fake HEGIC";
     }
 }
 
 
 contract FakeRHegicToken is Ownable, ERC20("Fake rHEGIC", "FakeRHEGIC") {
-    // Hardhat toolkit can't verify contracts on Etherscan if they have the same
-    // bytecodes. This variable is useless but it makes the fake rHEGIC's bytecode
-    // different from that of fake HEGIC's, so verification is a bit easier.
-    FakeHegicToken public immutable isAnIOUFor;
-
-    constructor(FakeHegicToken _isAnIOUFor) {
-        isAnIOUFor = _isAnIOUFor;
+    constructor() {
         _mint(msg.sender, 100e18);
     }
 
-    function mint(uint amount) public onlyOwner {
+    function mint(uint amount) external onlyOwner {
         _mint(msg.sender, amount);
+    }
+
+    function getTokenName() external pure returns (string memory) {
+        return "Fake rHEGIC";
     }
 }
 
@@ -58,11 +60,11 @@ contract IOUTokenRedemption is Ownable {
         blocksToRelease = _blocksToRelease;
     }
 
-    function fundOutputToken(uint amount) public onlyOwner {
+    function fundOutputToken(uint amount) external onlyOwner {
         outputToken.safeTransferFrom(msg.sender, address(this), amount);
     }
 
-    function deposit(uint amount) public {
+    function deposit(uint amount) external {
         require(!alreadyDeposited[msg.sender], "This account has already deposited");
         alreadyDeposited[msg.sender] = true;
 
@@ -75,7 +77,7 @@ contract IOUTokenRedemption is Ownable {
         inputToken.safeTransferFrom(msg.sender, address(this), amount);
     }
 
-    function redeem() public returns (uint amount) {
+    function redeem() external returns (uint amount) {
         amount = getRedeemableAmount(msg.sender);
         outputToken.safeTransfer(msg.sender, amount);
         deposits[msg.sender].amountRedeemed += amount;

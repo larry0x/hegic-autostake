@@ -5,29 +5,30 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-import "./MockUpContracts.sol";
+import "./interfaces/IHegicStakingPool.sol";
+import "./interfaces/IIOUTokenRedemption.sol";
 
 
 /**
  * @author Larrypc
- * @title HEGIC AutoStake
- * @notice Pools HegicIOUToken (rHEGIC) together and deposits to the rHEGIC <> HEGIC
+ * @title HegicAutoStakeToSHegic
+ * @notice Pools HegicIOUToken (rHEGIC) together and deposits to the rHEGIC --> HEGIC
  * redemption contract; withdraws HEGIC and deposits to jmonteer's HegicStakingPool at
  * regular intervals.
  */
-contract HegicAutoStake is Ownable {
+contract HegicAutoStakeToSHegic is Ownable {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
-    struct DepositData {
+    struct UserData {
         uint amountDeposited;
         uint amountWithdrawn;
     }
 
     IERC20 public immutable HEGIC;
     IERC20 public immutable rHEGIC;
-    FakeHegicStakingPool public immutable sHEGIC;  // Change this when deploying!!!
-    IOUTokenRedemption public immutable redemption;
+    IIOUTokenRedemption public immutable redemption;
+    IHegicStakingPool public immutable sHEGIC;
 
     uint public feeRate = 100;  // 1%
     address public feeRecipient;
@@ -36,20 +37,24 @@ contract HegicAutoStake is Ownable {
     bool public allowClaimRefund = true;
 
     uint public totalDepositors = 0;
-    uint public totalDepositReceived = 0;
+    uint public totalDeposited = 0;
     uint public totalRedeemed = 0;
+    uint public totalWithdrawable = 0;
+    uint public totalWithdrawn = 0;  // Not Including fees
+    uint public totalFeeCollected = 0;
 
-    mapping(address => DepositData) public depositData;
+    mapping(address => UserData) public userData;
 
     event Deposited(address account, uint amount);
     event RefundClaimed(address account, uint amount);
     event Withdrawn(address account, uint amountAfterFee, uint fee);
 
-    constructor(IERC20 _HEGIC, IERC20 _rHEGIC, FakeHegicStakingPool _sHEGIC, IOUTokenRedemption _redemption) {
+    constructor(IERC20 _HEGIC, IERC20 _rHEGIC, IIOUTokenRedemption _redemption, IHegicStakingPool _sHEGIC) {
         HEGIC = _HEGIC;
         rHEGIC = _rHEGIC;
         sHEGIC = _sHEGIC;
         redemption = _redemption;
+
         feeRecipient = msg.sender;
     }
 
@@ -57,9 +62,9 @@ contract HegicAutoStake is Ownable {
      * @notice Set the fee rate users are charged upon withdrawal.
      * @param _feeRate The new rate in basis points. E.g. 200 = 2%
      */
-    function setFeeRate(uint _feeRate) public onlyOwner {
+    function setFeeRate(uint _feeRate) external onlyOwner {
         require(_feeRate >= 0, "Rate too low!");
-        require(_feeRate <= 500, "Rate too high!");  // Owner can charge no more than 5%
+        require(_feeRate <= 500, "Rate too high!");
         feeRate = _feeRate;
     }
 
@@ -67,7 +72,7 @@ contract HegicAutoStake is Ownable {
      * @notice Set the recipient address to fees generated.
      * @param _feeRecipient The new recipient address
      */
-    function setFeeRecipient(address _feeRecipient) public onlyOwner {
+    function setFeeRecipient(address _feeRecipient) external onlyOwner {
         require(_feeRecipient != address(0), "Cannot set recipient to zero address");
         feeRecipient = _feeRecipient;
     }
@@ -77,17 +82,17 @@ contract HegicAutoStake is Ownable {
      * @param amount Amount of rHEGIC to be deposited, i.e. amount of convHEGIC to
      * be minted
      */
-    function deposit(uint amount) public {
+    function deposit(uint amount) external {
         require(allowDeposit, "New deposits no longer accepted");
         require(amount > 0, "Amount must be greater than zero");
 
-        if (depositData[msg.sender].amountDeposited == 0) {
+        if (userData[msg.sender].amountDeposited == 0) {
             totalDepositors += 1;
         }
-        totalDepositReceived += amount;
+        totalDeposited += amount;
 
         rHEGIC.safeTransferFrom(msg.sender, address(this), amount);
-        depositData[msg.sender].amountDeposited += amount;
+        userData[msg.sender].amountDeposited += amount;
 
         emit Deposited(msg.sender, amount);
     }
@@ -97,14 +102,14 @@ contract HegicAutoStake is Ownable {
      * contract. The developer will notify users to do this if the project fails
      * to attract enough deposit.
      */
-    function claimRefund() public onlyOwner {
-        uint amount = depositData[msg.sender].amountDeposited;
+    function claimRefund() external onlyOwner {
+        uint amount = userData[msg.sender].amountDeposited;
 
         require(amount > 0, "User has not deposited any fund");
         require(allowClaimRefund, "Funde are already deposited to the redemption contract");
 
         rHEGIC.safeTransfer(msg.sender, amount);
-        depositData[msg.sender].amountDeposited = 0;
+        userData[msg.sender].amountDeposited = 0;
 
         emit RefundClaimed(msg.sender, amount);
     }
@@ -112,17 +117,15 @@ contract HegicAutoStake is Ownable {
     /**
      * @notice Deposit all rHEGIC to the redemption contract. Once this is executed,
      * no new deposit will be accepted, and users will not be able to claim rHEGIC refund.
-     * @return amount Amount of rHEGIC deposited
      */
-    function depositToRedemptionContract() public onlyOwner returns (uint amount) {
-        amount = rHEGIC.balanceOf(address(this));
-        require(amount > 0, "No rHEGIC token to deposit");
+    function depositToRedemptionContract() external onlyOwner {
+        require(totalDeposited > 0, "No rHEGIC token to deposit");
+
+        rHEGIC.approve(address(redemption), totalDeposited);
+        redemption.deposit(totalDeposited);
 
         allowDeposit = false;
         allowClaimRefund = false;
-
-        rHEGIC.approve(address(redemption), amount);
-        redemption.deposit(amount);  //...
     }
 
     /**
@@ -131,34 +134,25 @@ contract HegicAutoStake is Ownable {
      * Anyone can call this as well, albeit no benefit.
      * @return amount Amount of HEGIC redeemed / sHEGIC staked in this transaction
      */
-    function redeemAndStake() public returns (uint amount) {
-        amount = redemption.redeem(); //...
+    function redeemAndStake() external returns (uint amount) {
+        amount = redemption.redeem();
         HEGIC.approve(address(sHEGIC), amount);
         sHEGIC.deposit(amount);
 
         totalRedeemed += amount;
-    }
-    
-    /**
-     * @notice Get the total amount of withdrawable sHEGIC held in contract.
-     */
-    function getTotalWithdrawableAmount() public view returns (uint withdrawableAmount) {
-        withdrawableAmount = sHEGIC.balanceOf(address(this));
+        totalWithdrawable += amount;
     }
 
     /**
      * @notice Calculate the maximum amount of sHEGIC token available for withdrawable
      * by a user.
      * @param account The user's account address
+     * @return amount The user's withdrawable amount
      */
-    function getUserWithdrawableAmount(address account) public view returns (uint withdrawableAmount) {
-        uint sHegicAvailable = getTotalWithdrawableAmount();
-        uint userTotalWithdrawable = depositData[account].amountDeposited;
-        uint userAlreadyWithdrawn = depositData[account].amountWithdrawn;
-
-        withdrawableAmount = userTotalWithdrawable.sub(userAlreadyWithdrawn);
-        if (sHegicAvailable < withdrawableAmount) {
-            withdrawableAmount = sHegicAvailable;
+    function getUserWithdrawableAmount(address account) public view returns (uint amount) {
+        amount = userData[account].amountDeposited.sub(userData[account].amountWithdrawn);
+        if (totalWithdrawable < amount) {
+            amount = totalWithdrawable;
         }
     }
 
@@ -173,11 +167,15 @@ contract HegicAutoStake is Ownable {
         uint amountAfterFee = amount.sub(fee);
 
         sHEGIC.transfer(msg.sender, amountAfterFee);
-        depositData[msg.sender].amountWithdrawn += amount;
+        userData[msg.sender].amountWithdrawn += amount;
 
         if (fee > 0) {
             sHEGIC.transfer(feeRecipient, fee);
         }
+
+        totalWithdrawable -= amount;
+        totalWithdrawn += amount;
+        totalFeeCollected += fee;
 
         emit Withdrawn(msg.sender, amountAfterFee, fee);
     }
