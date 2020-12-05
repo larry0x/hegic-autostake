@@ -2,29 +2,28 @@
   "name": "hegic-autostake",
   "version": "1.0.0",
   "description": "",
-  "main": "compile.js",
+  "main": "hardhat.config.js",
   "scripts": {
-    "test": "mocha"
+    "test": "npx hardhat test"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Larrypcdotcom/hegic-converter.git"
+    "url": "git+https://github.com/Larrypcdotcom/hegic-autostake.git"
   },
-  "author": "Larrypcdotcom",
+  "author": "@Larrypcdotcom",
   "license": "GPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/Larrypcdotcom/hegic-converter/issues"
+    "url": "https://github.com/Larrypcdotcom/hegic-autostake/issues"
   },
-  "homepage": "https://github.com/Larrypcdotcom/hegic-converter#readme",
+  "homepage": "https://github.com/Larrypcdotcom/hegic-autostake#readme",
   "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.1",
     "@nomiclabs/hardhat-etherscan": "^2.1.0",
-    "@truffle/hdwallet-provider": "^1.2.0",
-    "dotenv": "^8.2.0",
-    "ganache-cli": "^6.12.1",
-    "hardhat": "^2.0.4",
-    "mocha": "^8.2.1",
-    "solc": "^0.7.5",
-    "web3": "^1.3.0"
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "chai": "^4.2.0",
+    "ethereum-waffle": "^3.2.1",
+    "ethers": "^5.0.23",
+    "hardhat": "^2.0.4"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^3.3.0-solc-0.7"

@@ -1,6 +1,11 @@
-const { INFURA_PROJECT_ID, MNEMONIC, ETHERSCAN_API_KEY } = require('./secrets.json');
+require('@nomiclabs/hardhat-etherscan');
+require('@nomiclabs/hardhat-waffle');
 
-require("@nomiclabs/hardhat-etherscan");
+const {
+  INFURA_PROJECT_ID,
+  MNEMONIC,
+  ETHERSCAN_API_KEY
+} = require('./secrets.json');
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
