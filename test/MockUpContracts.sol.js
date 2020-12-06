@@ -5,6 +5,10 @@ const chai = require('chai');
 const expect = chai.expect;
 chai.use(require('chai-as-promised'));
 
+//------------------------------------------------------------------------------
+// Test FakeHegicToken
+//------------------------------------------------------------------------------
+
 describe('FakeHegicToken', () => {
   let owner;
   let user;
@@ -42,6 +46,10 @@ describe('FakeHegicToken', () => {
   });
 });
 
+//------------------------------------------------------------------------------
+// Test FakeRHegicToken
+//------------------------------------------------------------------------------
+
 describe('FakeRHegicToken', () => {
   let FakeRHegicTokenInstance;
 
@@ -55,6 +63,10 @@ describe('FakeRHegicToken', () => {
     expect(tokenName).to.equal('Fake rHEGIC');
   });
 });
+
+//------------------------------------------------------------------------------
+// Test IOUTokenRedemption
+//------------------------------------------------------------------------------
 
 describe('IOUTokenRedemption', () => {
   let owner;
@@ -111,6 +123,10 @@ describe('IOUTokenRedemption', () => {
     expect(amountRedeemed).to.equal(correctRedeemableAmount);
   });
 });
+
+//------------------------------------------------------------------------------
+// Test FakeHegicStakingPool
+//------------------------------------------------------------------------------
 
 describe('FakeHegicStakingPool', () => {
   let owner;
