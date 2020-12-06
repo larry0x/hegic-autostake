@@ -49,7 +49,6 @@ contract IOUTokenRedemption is Ownable {
 
     uint public immutable blocksToRelease;  // How many block since since deposit will HEGIC be completely released.
     mapping(address => Deposit) public deposits;
-    mapping(address => bool) public alreadyDeposited;
 
     ERC20 public immutable inputToken;
     ERC20 public immutable outputToken;
@@ -65,8 +64,8 @@ contract IOUTokenRedemption is Ownable {
     }
 
     function deposit(uint amount) external {
-        require(!alreadyDeposited[msg.sender], "This account has already deposited");
-        alreadyDeposited[msg.sender] = true;
+        require(amount > 0, "Amount must be greater than zero");
+        require(deposits[msg.sender].amountDeposited == 0, "This account has already deposited");
 
         deposits[msg.sender] = Deposit({
             blockDeposited: block.number,
