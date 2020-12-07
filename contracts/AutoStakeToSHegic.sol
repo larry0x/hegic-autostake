@@ -9,9 +9,10 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "./interfaces/IHegicStakingPool.sol";
 import "./AutoStake.sol";
 
+
 /**
  * @author Larrypc
- * @title AutoStake
+ * @title AutoStakeToSHegic
  * @notice Pools HegicIOUToken (rHEGIC) together and deposits to the rHEGIC --> HEGIC
  * redemption contract; withdraws HEGIC and deposits to jmonteer's hegicstakingpool.co
  * at regular intervals.

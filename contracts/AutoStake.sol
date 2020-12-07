@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-// import "./interfaces/IHegicPoolV2.sol";
 import "./interfaces/IIOUTokenRedemption.sol";
 
 
