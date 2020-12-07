@@ -82,7 +82,7 @@ contract IOUTokenRedemption is Ownable {
         deposits[msg.sender].amountRedeemed += amount;
     }
 
-    function getRedeemableAmount(address account) public view returns (uint withdrawable) {
+    function getRedeemableAmount(address account) internal view returns (uint withdrawable) {
         uint blocksSinceDeposit = (block.number).sub(deposits[account].blockDeposited);
         withdrawable = (deposits[account].amountDeposited)
             .mul(blocksSinceDeposit)
@@ -107,8 +107,56 @@ contract FakeHegicStakingPool is ERC20("Fake sHEGIC", "FakeSHEGIC") {
         inputToken = _inputToken;
     }
 
-    function deposit(uint amount) public {
+    function deposit(uint amount) external {
         inputToken.safeTransferFrom(msg.sender, address(this), amount);
         _mint(msg.sender, amount);
+    }
+}
+
+
+contract FakeZHegicToken is Ownable, ERC20("Fake zHEGIC", "FakeZHEGIC") {
+    address public pool;
+
+    modifier onlyPool {
+        require(msg.sender == pool, "Only zLOT HEGIC pool can call this function");
+        _;
+    }
+
+    function setPool (address _pool) external onlyOwner {
+        pool = _pool;
+    }
+
+    function mint(address account, uint amount) external onlyPool {
+        _mint(account, amount);
+    }
+}
+
+
+/*
+ * To simulate the floating conversion rate of zHEGIC/HEGIC, here we start with
+ * 1:1, then increase 5% per block.
+ * e.g. One blocks after the contract is created, 1 zHEGIC will worth 1.05 HEGIC;
+ * another block after that, 1 zHEGIC will worth 1.10 HEGIC, etc.
+ */
+contract FakeHegicPoolV2 {
+    using SafeMath for uint;
+    using SafeERC20 for ERC20;
+
+    ERC20 public immutable inputToken;
+    FakeZHegicToken public immutable zToken;
+    uint public blockCreated;
+
+    constructor(ERC20 _inputToken, FakeZHegicToken _zToken) {
+        inputToken = _inputToken;
+        zToken = _zToken;
+        blockCreated = block.number;
+    }
+
+    function deposit(uint amount) external returns (uint zTokenAmount) {
+        uint blocksPassed = (block.number).sub(blockCreated);
+        zTokenAmount = amount.mul(100).div(blocksPassed.mul(5).add(100));
+
+        inputToken.safeTransferFrom(msg.sender, address(this), amount);
+        zToken.mint(msg.sender, zTokenAmount);
     }
 }

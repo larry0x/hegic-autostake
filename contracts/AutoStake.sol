@@ -30,6 +30,7 @@ abstract contract AutoStake is Ownable {
     uint public totalDepositors = 0;
     uint public totalDeposited = 0;
     uint public totalRedeemed = 0;
+    uint public totalStaked = 0;
     uint public totalWithdrawable = 0;
     uint public totalWithdrawn = 0;  // Not Including fees
     uint public totalFeeCollected = 0;
@@ -127,7 +128,7 @@ abstract contract AutoStake is Ownable {
     }
 
     // Functions to be overriden
-    function redeemAndStake() virtual external returns (uint) {}
+    function redeemAndStake() virtual external returns (uint, uint) {}
     function withdrawStakedHEGIC() virtual external {}
     function getUserWithdrawableAmount(address account) virtual public view returns (uint) {}
 }
