@@ -158,3 +158,42 @@ describe('FakeHegicStakingPool', () => {
     expect(userBalance).to.equal('50000000000000000000');
   });
 });
+
+//------------------------------------------------------------------------------
+// Test Fake zLOT contracts
+//------------------------------------------------------------------------------
+
+describe('FakeZHegicToken & FakeHegicPoolV2', () => {
+  let owner;
+  let FakeHegicTokenInstance;
+  let FakeZHegicTokenInstance;
+  let FakeHegicPoolV2Instance;
+
+  beforeEach(async () => {
+    [ owner ] = await ethers.getSigners();
+
+    const FakeHegicToken = await ethers.getContractFactory('FakeHegicToken');
+    FakeHegicTokenInstance = await FakeHegicToken.deploy();
+
+    const FakeZHegicToken = await ethers.getContractFactory('FakeZHegicToken');
+    FakeZHegicTokenInstance = await FakeZHegicToken.deploy();
+
+    const FakeHegicPoolV2 = await ethers.getContractFactory('FakeHegicPoolV2');
+    FakeHegicPoolV2Instance = await FakeHegicPoolV2
+      .deploy(FakeHegicTokenInstance.address, FakeZHegicTokenInstance.address);
+
+    await FakeZHegicTokenInstance.connect(owner).setPool(FakeHegicPoolV2Instance.address);
+
+    await FakeHegicTokenInstance.connect(owner)
+      .approve(FakeHegicPoolV2Instance.address, '100000000000000000000');
+  });
+
+  it('should take HEGIC deposit and mint correct amount of zHEGIC token', async () => {
+    for (i = 0; i < 4; i++) {
+      await FakeHegicPoolV2Instance.connect(owner).deposit('25000000000000000000');
+    }
+
+    const balance = await FakeZHegicTokenInstance.balanceOf(owner.address);
+    expect(balance).to.equal('81803232998885172797');
+  });
+})
