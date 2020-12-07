@@ -27,8 +27,8 @@ contract AutoStakeToSHegic is Ownable {
 
     IERC20 public immutable HEGIC;
     IERC20 public immutable rHEGIC;
-    IIOUTokenRedemption public immutable redemption;
     IHegicStakingPool public immutable sHEGIC;
+    IIOUTokenRedemption public immutable redemption;
 
     uint public feeRate = 100;  // 1%
     address public feeRecipient;
@@ -51,7 +51,13 @@ contract AutoStakeToSHegic is Ownable {
     event RefundClaimed(address account, uint amount);
     event Withdrawn(address account, uint amountAfterFee, uint fee);
 
-    constructor(IERC20 _HEGIC, IERC20 _rHEGIC, IIOUTokenRedemption _redemption, IHegicStakingPool _sHEGIC) {
+    constructor(
+        IERC20 _HEGIC,
+        IERC20 _rHEGIC,
+        IHegicStakingPool _sHEGIC,
+        IIOUTokenRedemption _redemption
+    )
+    {
         HEGIC = _HEGIC;
         rHEGIC = _rHEGIC;
         sHEGIC = _sHEGIC;

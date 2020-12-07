@@ -39,8 +39,8 @@ describe('AutoStakeToSHegic', () => {
     AutoStakeToSHegicInstance = await AutoStakeToSHegic.deploy(
       FakeHegicTokenInstance.address,
       FakeRHegicTokenInstance.address,
+      FakeHegicStakingPoolInstance.address,
       IOUTokenRedemptionInstance.address,
-      FakeHegicStakingPoolInstance.address
     );
 
     // Fund IOUTokenRedemption contract with HEGIC

@@ -31,8 +31,8 @@ const deploy = async () => {
     .deploy(
       FakeHegicTokenInstance.address,
       FakeRHegicTokenInstance.address,
+      FakeHegicStakingPoolInstance.address,
       IOUTokenRedemptionInstance.address,
-      FakeHegicStakingPoolInstance.address
     );
   console.log('AutoStakeToSHegic', AutoStakeToSHegicInstance.address);
 };
