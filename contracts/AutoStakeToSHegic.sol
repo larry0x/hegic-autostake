@@ -11,12 +11,12 @@ import "./interfaces/IIOUTokenRedemption.sol";
 
 /**
  * @author Larrypc
- * @title HegicAutoStakeToSHegic
+ * @title Hegic AutoStake: to sHEGIC
  * @notice Pools HegicIOUToken (rHEGIC) together and deposits to the rHEGIC --> HEGIC
  * redemption contract; withdraws HEGIC and deposits to jmonteer's HegicStakingPool at
  * regular intervals.
  */
-contract HegicAutoStakeToSHegic is Ownable {
+contract AutoStakeToSHegic is Ownable {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
@@ -42,6 +42,8 @@ contract HegicAutoStakeToSHegic is Ownable {
     uint public totalWithdrawable = 0;
     uint public totalWithdrawn = 0;  // Not Including fees
     uint public totalFeeCollected = 0;
+
+    uint public lastRedemptionTimestamp;
 
     mapping(address => UserData) public userData;
 
@@ -78,6 +80,17 @@ contract HegicAutoStakeToSHegic is Ownable {
     }
 
     /**
+     * @notice Set to accept or reject new deposits. May be called if the project
+     * fails to attract enough deposits that justify the work. In this case the
+     * developer will inform depositors to withdraw their rHEGIC by calling the
+     * `claimRefund` function.
+     * @param _allowDeposit Whether new deposits are accepted
+     */
+    function setAllowDeposit(bool _allowDeposit) external onlyOwner {
+        allowDeposit = _allowDeposit;
+    }
+
+    /**
      * @notice Deposits a given amount of rHEGIC to the contract.
      * @param amount Amount of rHEGIC to be deposited, i.e. amount of convHEGIC to
      * be minted
@@ -102,14 +115,17 @@ contract HegicAutoStakeToSHegic is Ownable {
      * contract. The developer will notify users to do this if the project fails
      * to attract enough deposit.
      */
-    function claimRefund() external onlyOwner {
+    function claimRefund() external {
         uint amount = userData[msg.sender].amountDeposited;
 
         require(amount > 0, "User has not deposited any fund");
-        require(allowClaimRefund, "Funde are already deposited to the redemption contract");
+        require(allowClaimRefund, "Funds already transferred to the redemption contract");
 
         rHEGIC.safeTransfer(msg.sender, amount);
+
         userData[msg.sender].amountDeposited = 0;
+        totalDeposited -= amount;
+        totalDepositors -= 1;
 
         emit RefundClaimed(msg.sender, amount);
     }
@@ -141,6 +157,8 @@ contract HegicAutoStakeToSHegic is Ownable {
 
         totalRedeemed += amount;
         totalWithdrawable += amount;
+
+        lastRedemptionTimestamp = block.timestamp;
     }
 
     /**
@@ -174,7 +192,7 @@ contract HegicAutoStakeToSHegic is Ownable {
         }
 
         totalWithdrawable -= amount;
-        totalWithdrawn += amount;
+        totalWithdrawn += amountAfterFee;
         totalFeeCollected += fee;
 
         emit Withdrawn(msg.sender, amountAfterFee, fee);
