@@ -1,6 +1,6 @@
 # HEGIC AutoStake: contracts
 
-Contract addresses:
+### Mainnet contract addresses
 
 | Contract        | Address                                      | Link                                                                                 |
 |-----------------|----------------------------------------------|--------------------------------------------------------------------------------------|
@@ -9,3 +9,17 @@ Contract addresses:
 | sHEGIC          | `0xf4128B00AFdA933428056d0F0D1d7652aF7e2B35` | [Etherscan](https://etherscan.io/address/0xf4128B00AFdA933428056d0F0D1d7652aF7e2B35) |
 | zHEGIC          | `0x837010619aeb2AE24141605aFC8f66577f6fb2e7` | [Etherscan](https://etherscan.io/address/0x837010619aeb2AE24141605aFC8f66577f6fb2e7) |
 | zLOT HEGIC pool | `0x9E4E091fC8921FE3575eab1c9a6446114f3b5Ef2` | [Etherscan](https://etherscan.io/address/0x9E4E091fC8921FE3575eab1c9a6446114f3b5Ef2) |
+
+### Notes to myself
+
+Deploy contracts:
+
+```bash
+npx hardhat run deploy.js --network goerli
+```
+
+Verify contracts on Etherscan:
+
+```bash
+npx hardhat verify --network goerli <contractAddress> [constructorArguments]
+```
