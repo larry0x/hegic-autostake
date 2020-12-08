@@ -5,7 +5,6 @@ const chai = require('chai');
 chai.use(require('chai-as-promised'));
 const expect = chai.expect;
 
-
 describe('AutoStakeToSHegic', () => {
   let owner;
   let recipient;
@@ -138,7 +137,7 @@ describe('AutoStakeToSHegic', () => {
     expect(allowClaimRefund).to.be.false;
   });
 
-  it('should reject deposits & refund claims once rHEGIC tokens have been transferred to redemption contract', async () => {
+  it('should reject deposits & refund claims once rHEGIC have been transferred to redemption contract', async () => {
     await AutoStakeToSHegicInstance.connect(owner).depositToRedemptionContract();
 
     await expect(AutoStakeToSHegicInstance.connect(user2).deposit('10000000000000000000'))

@@ -22,8 +22,6 @@ import "./AutoStake.sol";
     IERC20 public zHEGIC;
     IHegicPoolV2 public zLotPool;
 
-
-
     constructor(
         IERC20 _HEGIC,
         IERC20 _rHEGIC,
@@ -70,12 +68,10 @@ import "./AutoStake.sol";
         uint fee = amount.mul(feeRate).div(10000);
         uint amountAfterFee = amount.sub(fee);
 
-        zHEGIC.transfer(msg.sender, amountAfterFee);
-        userData[msg.sender].amountWithdrawn += amount;
+        zHEGIC.safeTransfer(msg.sender, amountAfterFee);
+        zHEGIC.safeTransfer(feeRecipient, fee);
 
-        if (fee > 0) {
-            zHEGIC.transfer(feeRecipient, fee);
-        }
+        userData[msg.sender].amountWithdrawn += amount;
 
         totalWithdrawable -= amount;
         totalWithdrawn += amountAfterFee;

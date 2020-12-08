@@ -68,11 +68,9 @@ import "./AutoStake.sol";
         uint amountAfterFee = amount.sub(fee);
 
         sHEGIC.transfer(msg.sender, amountAfterFee);
-        userData[msg.sender].amountWithdrawn += amount;
+        sHEGIC.transfer(feeRecipient, fee);
 
-        if (fee > 0) {
-            sHEGIC.transfer(feeRecipient, fee);
-        }
+        userData[msg.sender].amountWithdrawn += amount;
 
         totalWithdrawable -= amount;
         totalWithdrawn += amountAfterFee;
