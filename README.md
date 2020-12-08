@@ -18,6 +18,12 @@ at regular intervals.
 
 ## Notes to myself
 
+Run test scripts:
+
+```bash
+npx hardhat test
+```
+
 Deploy contracts:
 
 ```bash
@@ -27,5 +33,5 @@ npx hardhat run scripts/deployTo{Test,Main}net.js --network {goerli,mainnet}
 Verify contracts on Etherscan:
 
 ```bash
-npx hardhat verify --network goerli contractAddress [constructorArguments]
+npx hardhat verify --network {goerli,mainnet} contractAddress [constructorArguments]
 ```
