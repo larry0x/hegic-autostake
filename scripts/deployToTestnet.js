@@ -1,7 +1,7 @@
 const { ethers } = require('hardhat');
 
 const deploy = async () => {
-  const [ deployer ] = await ethers.getSigners();
+  const [ deployer, recipient ] = await ethers.getSigners();
   console.log('Using account', deployer.address);
 
   const FakeHegicToken = await ethers.getContractFactory('FakeHegicToken');
@@ -25,7 +25,8 @@ const deploy = async () => {
   const FakeHegicPoolV2 = await ethers.getContractFactory('FakeHegicPoolV2');
   const FakeHegicPoolV2Instance = await FakeHegicPoolV2.deploy(
     FakeHegicTokenInstance.address,
-    FakeZHegicTokenInstance.address
+    FakeZHegicTokenInstance.address,
+    1
   );
   console.log('FakeHegicPoolV2 deployed to', FakeHegicPoolV2Instance.address);
 
@@ -56,8 +57,26 @@ const deploy = async () => {
   );
   console.log('AutoStakeToZHegic deployed to', AutoStakeToZHegicInstance.address);
 
-  FakeZHegicTokenInstance.connect(deployer).setPool(FakeHegicPoolV2Instance.address);
-  console.log('FakeZHegicToken pool address configured')
+  // Set fee rate and recipient
+  await AutoStakeToSHegicInstance.connect(deployer)
+    .setFeeRate(200);  // 2%
+
+  await AutoStakeToSHegicInstance.connect(deployer)
+    .setFeeRecipient(recipient.address);
+
+  await AutoStakeToZHegicInstance.connect(deployer)
+    .setFeeRate(200);
+
+  await AutoStakeToZHegicInstance.connect(deployer)
+    .setFeeRecipient(recipient.address);
+
+  // Set pool address for Fake zHEGIC token
+  await FakeZHegicTokenInstance.connect(deployer)
+    .setPool(FakeHegicPoolV2Instance.address);
+
+  // Fund redemption contract with Fake HEGIC token
+  await FakeHegicTokenInstance.connect(deployer)
+    .transfer(IOUTokenRedemptionInstance.address, '100000000000000000000');
 };
 
 deploy()
