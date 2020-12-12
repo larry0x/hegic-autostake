@@ -180,7 +180,7 @@ describe('FakeZHegicToken & FakeHegicPoolV2', () => {
 
     const FakeHegicPoolV2 = await ethers.getContractFactory('FakeHegicPoolV2');
     FakeHegicPoolV2Instance = await FakeHegicPoolV2
-      .deploy(FakeHegicTokenInstance.address, FakeZHegicTokenInstance.address);
+      .deploy(FakeHegicTokenInstance.address, FakeZHegicTokenInstance.address, 5);
 
     await FakeZHegicTokenInstance.connect(owner).setPool(FakeHegicPoolV2Instance.address);
 

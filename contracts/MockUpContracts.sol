@@ -144,17 +144,20 @@ contract FakeHegicPoolV2 {
 
     ERC20 public immutable inputToken;
     FakeZHegicToken public immutable zToken;
-    uint public blockCreated;
 
-    constructor(ERC20 _inputToken, FakeZHegicToken _zToken) {
+    uint public blockCreated;
+    uint rateIncreasePerBlock;
+
+    constructor(ERC20 _inputToken, FakeZHegicToken _zToken, uint _rateIncreatePerBlock) {
         inputToken = _inputToken;
         zToken = _zToken;
         blockCreated = block.number;
+        rateIncreasePerBlock = _rateIncreatePerBlock;
     }
 
     function deposit(uint amount) external returns (uint zTokenAmount) {
         uint blocksPassed = (block.number).sub(blockCreated);
-        zTokenAmount = amount.mul(100).div(blocksPassed.mul(5).add(100));
+        zTokenAmount = amount.mul(100).div(blocksPassed.mul(rateIncreasePerBlock).add(100));
 
         inputToken.safeTransferFrom(msg.sender, address(this), amount);
         zToken.mint(msg.sender, zTokenAmount);

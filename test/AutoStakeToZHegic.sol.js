@@ -37,7 +37,8 @@ describe('AutoStakeToZHegic', () => {
     const FakeHegicPoolV2 = await ethers.getContractFactory('FakeHegicPoolV2');
     FakeHegicPoolV2Instance = await FakeHegicPoolV2.deploy(
       FakeHegicTokenInstance.address,
-      FakeZHegicTokenInstance.address
+      FakeZHegicTokenInstance.address,
+      5
     );
 
     const AutoStakeToZHegic = await ethers.getContractFactory('AutoStakeToZHegic');
