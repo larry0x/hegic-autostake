@@ -11,50 +11,50 @@ describe('AutoStakeToZHegic', () => {
   let user1;
   let user2;
 
-  let FakeHegicTokenInstance;
-  let FakeRHegicTokenInstance;
+  let FakeHegicInstance;
+  let FakeRHegicInstance;
   let IOUTokenRedemptionInstance;
-  let FakeZHegicTokenInstance;
-  let FakeHegicPoolV2Instance;
+  let FakeZHegicInstance;
+  let FakeZLotPoolInstance;
   let AutoStakeToZHegicInstance;
 
   beforeEach(async () => {
     [ owner, recipient, user1, user2 ] = await ethers.getSigners();
 
-    const FakeHegicToken = await ethers.getContractFactory('FakeHegicToken');
-    FakeHegicTokenInstance = await FakeHegicToken.deploy();
+    const FakeHegic = await ethers.getContractFactory('FakeHegic');
+    FakeHegicInstance = await FakeHegic.deploy();
 
-    const FakeRHegicToken = await ethers.getContractFactory('FakeRHegicToken');
-    FakeRHegicTokenInstance = await FakeRHegicToken.deploy();
+    const FakeRHegic = await ethers.getContractFactory('FakeRHegic');
+    FakeRHegicInstance = await FakeRHegic.deploy();
 
     const IOUTokenRedemption = await ethers.getContractFactory('IOUTokenRedemption');
     IOUTokenRedemptionInstance = await IOUTokenRedemption
-      .deploy(FakeRHegicTokenInstance.address, FakeHegicTokenInstance.address, 5);
+      .deploy(FakeRHegicInstance.address, FakeHegicInstance.address, 5);
 
-    const FakeZHegicToken = await ethers.getContractFactory('FakeZHegicToken');
-    FakeZHegicTokenInstance = await FakeZHegicToken.deploy();
+    const FakeZHegic = await ethers.getContractFactory('FakeZHegic');
+    FakeZHegicInstance = await FakeZHegic.deploy();
 
-    const FakeHegicPoolV2 = await ethers.getContractFactory('FakeHegicPoolV2');
-    FakeHegicPoolV2Instance = await FakeHegicPoolV2.deploy(
-      FakeHegicTokenInstance.address,
-      FakeZHegicTokenInstance.address,
+    const FakeZLotPool = await ethers.getContractFactory('FakeZLotPool');
+    FakeZLotPoolInstance = await FakeZLotPool.deploy(
+      FakeHegicInstance.address,
+      FakeZHegicInstance.address,
       5
     );
 
     const AutoStakeToZHegic = await ethers.getContractFactory('AutoStakeToZHegic');
     AutoStakeToZHegicInstance = await AutoStakeToZHegic.deploy(
-      FakeHegicTokenInstance.address,
-      FakeRHegicTokenInstance.address,
-      FakeZHegicTokenInstance.address,
-      FakeHegicPoolV2Instance.address,
+      FakeHegicInstance.address,
+      FakeRHegicInstance.address,
+      FakeZHegicInstance.address,
+      FakeZLotPoolInstance.address,
       IOUTokenRedemptionInstance.address,
     );
 
     // Set pool address parameter for Fake zHEGIC token
-    await FakeZHegicTokenInstance.connect(owner).setPool(FakeHegicPoolV2Instance.address);
+    await FakeZHegicInstance.connect(owner).setPool(FakeZLotPoolInstance.address);
 
     // Fund IOUTokenRedemption contract with HEGIC
-    await FakeHegicTokenInstance.connect(owner)
+    await FakeHegicInstance.connect(owner)
       .transfer(IOUTokenRedemptionInstance.address, '100000000000000000000');
 
     // Set fee rate & recipeint
@@ -64,20 +64,20 @@ describe('AutoStakeToZHegic', () => {
       .setFeeRecipient(recipient.address);
 
     // Transfer some rHEGIC tokens to users
-    await FakeRHegicTokenInstance.connect(owner)
+    await FakeRHegicInstance.connect(owner)
       .transfer(user1.address, '25000000000000000000');
 
-    await FakeRHegicTokenInstance.connect(owner)
+    await FakeRHegicInstance.connect(owner)
       .transfer(user2.address, '25000000000000000000');
 
     // Approve spending
-    await FakeRHegicTokenInstance.connect(owner)
+    await FakeRHegicInstance.connect(owner)
       .approve(AutoStakeToZHegicInstance.address, '50000000000000000000');
 
-    await FakeRHegicTokenInstance.connect(user1)
+    await FakeRHegicInstance.connect(user1)
       .approve(AutoStakeToZHegicInstance.address, '25000000000000000000');
 
-    await FakeRHegicTokenInstance.connect(user2)
+    await FakeRHegicInstance.connect(user2)
       .approve(AutoStakeToZHegicInstance.address, '25000000000000000000');
 
     // Make deposits
@@ -93,7 +93,7 @@ describe('AutoStakeToZHegic', () => {
     for (i = 0; i < 5; i++) {
       await AutoStakeToZHegicInstance.connect(owner).redeemAndStake();
     }
-    const balance = await FakeZHegicTokenInstance.balanceOf(AutoStakeToZHegicInstance.address);
+    const balance = await FakeZHegicInstance.balanceOf(AutoStakeToZHegicInstance.address);
     expect(balance).to.equal('48719897456739562001');
   });
 
@@ -109,13 +109,13 @@ describe('AutoStakeToZHegic', () => {
     await AutoStakeToZHegicInstance.connect(user1).withdrawStakedHEGIC();
     await AutoStakeToZHegicInstance.connect(owner).withdrawStakedHEGIC();
 
-    const user2WitndrawnAmount = await FakeZHegicTokenInstance.balanceOf(user2.address);
+    const user2WitndrawnAmount = await FakeZHegicInstance.balanceOf(user2.address);
     expect(user2WitndrawnAmount).to.equal('1671428571428571428');
 
-    const user1WitndrawnAmount = await FakeZHegicTokenInstance.balanceOf(user1.address);
+    const user1WitndrawnAmount = await FakeZHegicInstance.balanceOf(user1.address);
     expect(user1WitndrawnAmount).to.equal('2785714285714285714');
 
-    const ownerWitndrawnAmount = await FakeZHegicTokenInstance.balanceOf(owner.address);
+    const ownerWitndrawnAmount = await FakeZHegicInstance.balanceOf(owner.address);
     expect(ownerWitndrawnAmount).to.equal('5571428571428571428');
 
     // 1 zHEGIC = 1.95 HEGIC
@@ -130,7 +130,7 @@ describe('AutoStakeToZHegic', () => {
     await AutoStakeToZHegicInstance.connect(user1).withdrawStakedHEGIC();
     await AutoStakeToZHegicInstance.connect(user2).withdrawStakedHEGIC();
 
-    const recipientBalance = await FakeZHegicTokenInstance.balanceOf(recipient.address);
+    const recipientBalance = await FakeZHegicInstance.balanceOf(recipient.address);
     expect(recipientBalance).to.equal('1180219780219780218');
 
     // There will be a small amount of dust left over due to precision of integers,

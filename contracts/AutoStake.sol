@@ -130,5 +130,4 @@ abstract contract AutoStake is Ownable {
     // Functions to be overriden
     function redeemAndStake() virtual external returns (uint, uint) {}
     function withdrawStakedHEGIC() virtual external {}
-    function getUserWithdrawableAmount(address account) virtual public view returns (uint) {}
 }

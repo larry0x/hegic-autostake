@@ -86,7 +86,7 @@ import "./AutoStake.sol";
      * @param account The user's account address
      * @return amount The user's withdrawable amount
      */
-    function getUserWithdrawableAmount(address account) override public view returns (uint amount) {
+    function getUserWithdrawableAmount(address account) public view returns (uint amount) {
         amount = totalStaked
             .mul(userData[account].amountDeposited)
             .div(totalDeposited)

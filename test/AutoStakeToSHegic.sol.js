@@ -11,39 +11,44 @@ describe('AutoStakeToSHegic', () => {
   let user1;
   let user2;
 
-  let FakeHegicTokenInstance;
-  let FakeRHegicTokenInstance;
+  let FakeWBTCInstance;
+  let FakeHegicInstance;
+  let FakeRHegicInstance;
+  let FakeSHegicInstance;
   let IOUTokenRedemptionInstance;
-  let FakeHegicStakingPoolInstance;
   let AutoStakeToSHegicInstance;
 
   beforeEach(async () => {
     [ owner, recipient, user1, user2 ] = await ethers.getSigners();
 
-    const FakeHegicToken = await ethers.getContractFactory('FakeHegicToken');
-    FakeHegicTokenInstance = await FakeHegicToken.deploy();
+    const FakeWBTC = await ethers.getContractFactory('FakeWBTC');
+    FakeWBTCInstance = await FakeWBTC.deploy();
 
-    const FakeRHegicToken = await ethers.getContractFactory('FakeRHegicToken');
-    FakeRHegicTokenInstance = await FakeRHegicToken.deploy();
+    const FakeHegic = await ethers.getContractFactory('FakeHegic');
+    FakeHegicInstance = await FakeHegic.deploy();
+
+    const FakeRHegic = await ethers.getContractFactory('FakeRHegic');
+    FakeRHegicInstance = await FakeRHegic.deploy();
+
+    const FakeSHegic = await ethers.getContractFactory('FakeSHegic');
+    FakeSHegicInstance = await FakeSHegic
+      .deploy(FakeHegicInstance.address, FakeWBTCInstance.address);
 
     const IOUTokenRedemption = await ethers.getContractFactory('IOUTokenRedemption');
     IOUTokenRedemptionInstance = await IOUTokenRedemption
-      .deploy(FakeRHegicTokenInstance.address, FakeHegicTokenInstance.address, 5);
-
-    const FakeHegicStakingPool = await ethers.getContractFactory('FakeHegicStakingPool');
-    FakeHegicStakingPoolInstance = await FakeHegicStakingPool
-      .deploy(FakeHegicTokenInstance.address);
+      .deploy(FakeRHegicInstance.address, FakeHegicInstance.address, 5);
 
     const AutoStakeToSHegic = await ethers.getContractFactory('AutoStakeToSHegic');
     AutoStakeToSHegicInstance = await AutoStakeToSHegic.deploy(
-      FakeHegicTokenInstance.address,
-      FakeRHegicTokenInstance.address,
-      FakeHegicStakingPoolInstance.address,
+      FakeWBTCInstance.address,
+      FakeHegicInstance.address,
+      FakeRHegicInstance.address,
+      FakeSHegicInstance.address,
       IOUTokenRedemptionInstance.address,
     );
 
     // Fund IOUTokenRedemption contract with HEGIC
-    await FakeHegicTokenInstance.connect(owner)
+    await FakeHegicInstance.connect(owner)
       .transfer(IOUTokenRedemptionInstance.address, '100000000000000000000');
 
     // Set fee rate & recipeint
@@ -53,26 +58,32 @@ describe('AutoStakeToSHegic', () => {
       .setFeeRecipient(recipient.address);
 
     // Transfer some rHEGIC tokens to users
-    await FakeRHegicTokenInstance.connect(owner)
+    await FakeRHegicInstance.connect(owner)
       .transfer(user1.address, '25000000000000000000');
 
-    await FakeRHegicTokenInstance.connect(owner)
+    await FakeRHegicInstance.connect(owner)
       .transfer(user2.address, '25000000000000000000');
 
     // Approve spending
-    await FakeRHegicTokenInstance.connect(owner)
+    await FakeRHegicInstance.connect(owner)
       .approve(AutoStakeToSHegicInstance.address, '50000000000000000000');
 
-    await FakeRHegicTokenInstance.connect(user1)
+    await FakeRHegicInstance.connect(user1)
       .approve(AutoStakeToSHegicInstance.address, '25000000000000000000');
 
-    await FakeRHegicTokenInstance.connect(user2)
+    await FakeRHegicInstance.connect(user2)
       .approve(AutoStakeToSHegicInstance.address, '25000000000000000000');
 
     // Make deposits
     await AutoStakeToSHegicInstance.connect(owner).deposit('50000000000000000000');
     await AutoStakeToSHegicInstance.connect(user1).deposit('25000000000000000000');
     await AutoStakeToSHegicInstance.connect(user2).deposit('15000000000000000000');
+
+    // Fund sHEGIC contract some ether for use in `claimAllProfit` function
+    await owner.sendTransaction({
+      to: FakeSHegicInstance.address,
+      value: ethers.utils.parseEther('1')
+    });
   });
 
   it('should set fee rate successfully', async () => {
@@ -86,7 +97,7 @@ describe('AutoStakeToSHegic', () => {
   });
 
   it('should accept user deposit and record data in state variables correctly', async () => {
-    const balance = await FakeRHegicTokenInstance.balanceOf(AutoStakeToSHegicInstance.address);
+    const balance = await FakeRHegicInstance.balanceOf(AutoStakeToSHegicInstance.address);
     expect(balance).to.equal('90000000000000000000');
 
     const totalDepositors = await AutoStakeToSHegicInstance.totalDepositors();
@@ -103,10 +114,10 @@ describe('AutoStakeToSHegic', () => {
   it('should allow user to claim refund and update state variables accordingly', async () => {
     await AutoStakeToSHegicInstance.connect(user2).claimRefund();
 
-    const userBalance = await FakeRHegicTokenInstance.balanceOf(user2.address);
+    const userBalance = await FakeRHegicInstance.balanceOf(user2.address);
     expect(userBalance).to.equal('25000000000000000000');
 
-    const contractBalance = await FakeRHegicTokenInstance.balanceOf(AutoStakeToSHegicInstance.address);
+    const contractBalance = await FakeRHegicInstance.balanceOf(AutoStakeToSHegicInstance.address);
     expect(contractBalance).to.equal('75000000000000000000');
 
     const userData = await AutoStakeToSHegicInstance.userData(user2.address);
@@ -122,11 +133,11 @@ describe('AutoStakeToSHegic', () => {
   it('should correctly transfer rHEGIC tokens to redemption contract', async () => {
     await AutoStakeToSHegicInstance.connect(owner).depositToRedemptionContract();
 
-    const autostakeContractBalance = await FakeRHegicTokenInstance
+    const autostakeContractBalance = await FakeRHegicInstance
       .balanceOf(AutoStakeToSHegicInstance.address);
     expect(autostakeContractBalance).to.equal('0');
 
-    const redemptionContractBalance = await FakeRHegicTokenInstance
+    const redemptionContractBalance = await FakeRHegicInstance
       .balanceOf(IOUTokenRedemptionInstance.address);
     expect(redemptionContractBalance).to.equal('90000000000000000000');
 
@@ -151,7 +162,7 @@ describe('AutoStakeToSHegic', () => {
     await AutoStakeToSHegicInstance.connect(owner).depositToRedemptionContract();
     await AutoStakeToSHegicInstance.connect(owner).redeemAndStake();
 
-    const balance = await FakeHegicStakingPoolInstance.balanceOf(AutoStakeToSHegicInstance.address);
+    const balance = await FakeSHegicInstance.balanceOf(AutoStakeToSHegicInstance.address);
     expect(balance).to.equal('18000000000000000000');
 
     const totalRedeemed = await AutoStakeToSHegicInstance.totalRedeemed();
@@ -164,46 +175,53 @@ describe('AutoStakeToSHegic', () => {
     expect(lastRedemptionTimestamp).to.not.equal('0');
   });
 
-  it('should let user withdraw available sHEGIC', async () => {
+  it('should reject withdrawals before redemption is completed', async () => {
     await AutoStakeToSHegicInstance.connect(owner).depositToRedemptionContract();
     await AutoStakeToSHegicInstance.connect(owner).redeemAndStake();
 
-    // Should have 18 sHEGIC available; user 2 can withdraw 15 sHEGIC, minus fees
+    await expect(AutoStakeToSHegicInstance.connect(owner).withdrawStakedHEGIC())
+      .to.be.rejectedWith('Withdrawal not opened yet')
+  });
+
+  it('should let user withdraw available sHEGIC', async () => {
+    await AutoStakeToSHegicInstance.connect(owner).depositToRedemptionContract();
+
+    for (i = 0; i < 5; i++) {
+      await AutoStakeToSHegicInstance.connect(owner).redeemAndStake();
+    }
+
+    // There should be 90 sHEGIC, 0.1 ETH, 0.01 WBTC available
+    // User 2 should get 14.625 sHEGIC (after fee), 0.01667 ETH, 0.001667 WBTC
     await AutoStakeToSHegicInstance.connect(user2).withdrawStakedHEGIC();
 
-    const user2WitndrawnAmount = await FakeHegicStakingPoolInstance.balanceOf(user2.address);
+    const user2WitndrawnAmount = await FakeSHegicInstance.balanceOf(user2.address);
     expect(user2WitndrawnAmount).to.equal('14625000000000000000');
 
-    // 3 sHEGIC available after this withdrawl; user 1 should be able to withdraw these
+    const user2WbtcAmount = await FakeWBTCInstance.balanceOf(user2.address);
+    expect(user2WbtcAmount).to.equal('166666');
+
+    // There should now be 75 sHEGIC, 0.01833334 WBTC
+    // User 1 should get 24.375 sHEGIC, 0.00509259 WBTC
     await AutoStakeToSHegicInstance.connect(user1).withdrawStakedHEGIC();
 
-    const user1WitndrawnAmount = await FakeHegicStakingPoolInstance.balanceOf(user1.address);
-    expect(user1WitndrawnAmount).to.equal('2925000000000000000');
+    const user1WitndrawnAmount = await FakeSHegicInstance.balanceOf(user1.address);
+    expect(user1WitndrawnAmount).to.equal('24375000000000000000');
 
-    // Recipient should have received 18 * 2.5% = 0.45 sHEGIC fee
-    const recipientBalance = await FakeHegicStakingPoolInstance.balanceOf(recipient.address);
-    expect(recipientBalance).to.equal('450000000000000000');
+    const user1WbtcAmount = await FakeWBTCInstance.balanceOf(user1.address);
+    expect(user1WbtcAmount).to.equal('611111');
+
+    // There should now be 50 sHEGIC, 0.02222223 WBTC
+    // Owner should get 48.750 sHEGIC, 0.02222222 WBTC
+    await AutoStakeToSHegicInstance.connect(owner).withdrawStakedHEGIC();
+
+    const ownerWitndrawnAmount = await FakeSHegicInstance.balanceOf(owner.address);
+    expect(ownerWitndrawnAmount).to.equal('48750000000000000000');
+
+    const ownerWbtcAmount = await FakeWBTCInstance.balanceOf(owner.address);
+    expect(ownerWbtcAmount).to.equal('2222222');
 
     // No more sHEGIC left for withdrawal; transaction should fail
     await expect(AutoStakeToSHegicInstance.connect(owner).withdrawStakedHEGIC())
       .to.be.rejectedWith('No sHEGIC token available for withdrawal');
-  });
-
-  it('should update state variables correctly after user withdrawals', async () => {
-    await AutoStakeToSHegicInstance.connect(owner).depositToRedemptionContract();
-    await AutoStakeToSHegicInstance.connect(owner).redeemAndStake();
-    await AutoStakeToSHegicInstance.connect(user2).withdrawStakedHEGIC();
-
-    const totalWithdrawable = await AutoStakeToSHegicInstance.totalWithdrawable();
-    expect(totalWithdrawable).to.equal('3000000000000000000');
-
-    const totalWithdrawn = await AutoStakeToSHegicInstance.totalWithdrawn();
-    expect(totalWithdrawn).to.equal('14625000000000000000');
-
-    const totalFeeCollected = await AutoStakeToSHegicInstance.totalFeeCollected();
-    expect(totalFeeCollected).to.equal('375000000000000000');
-
-    const userData = await AutoStakeToSHegicInstance.userData(user2.address);
-    expect(userData.amountWithdrawn).to.equal('15000000000000000000');
   });
 });

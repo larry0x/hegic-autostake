@@ -20,14 +20,21 @@ import "./AutoStake.sol";
     using SafeERC20 for IERC20;
 
     IHegicStakingPool public sHEGIC;
+    IERC20 public WBTC;
+
+    uint public ACCURACY = 1e32;
+    uint public ethProfitPerToken = 0;
+    uint public wbtcProfitPerToken = 0;
 
     constructor(
+        IERC20 _WBTC,
         IERC20 _HEGIC,
         IERC20 _rHEGIC,
         IHegicStakingPool _sHEGIC,
         IIOUTokenRedemption _redemption
     )
     {
+        WBTC = _WBTC;
         HEGIC = _HEGIC;
         rHEGIC = _rHEGIC;
         sHEGIC = _sHEGIC;
@@ -35,6 +42,9 @@ import "./AutoStake.sol";
 
         feeRecipient = msg.sender;
     }
+
+    // Required for contract to receive ETH
+    receive() external payable {}
 
     /**
      * @notice Redeem the maximum possible amount of rHEGIC to HEGIC, then stake
@@ -58,20 +68,33 @@ import "./AutoStake.sol";
     }
 
     /**
-     * @notice Withdraw all available sHEGIC claimable by the user.
+     * @notice Withdraw all available sHEGIC claimable by the user, as well as ETH
+     * and WBTC profits pro-rata.
      */
     function withdrawStakedHEGIC() override external {
-        uint amount = getUserWithdrawableAmount(msg.sender);
+        require(allowWithdrawal(), "Withdrawal not opened yet");
+
+        uint amount = userData[msg.sender].amountDeposited
+            .sub(userData[msg.sender].amountWithdrawn);
         require(amount > 0, "No sHEGIC token available for withdrawal");
+
+        claimStakingProfit();
 
         uint fee = amount.mul(feeRate).div(10000);
         uint amountAfterFee = amount.sub(fee);
+        uint ethProfit = ethProfitPerToken.mul(amount).div(ACCURACY);
+        uint wbtcProfit = wbtcProfitPerToken.mul(amount).div(ACCURACY);
 
+        // Transfer sHEGIC and ETH/WBTC profits to user
         sHEGIC.transfer(msg.sender, amountAfterFee);
+        payable(msg.sender).transfer(ethProfit);
+        WBTC.transfer(msg.sender, wbtcProfit);
+
+        // Transfer sHEGIC fee to developer
         sHEGIC.transfer(feeRecipient, fee);
 
+        // Update state variables
         userData[msg.sender].amountWithdrawn += amount;
-
         totalWithdrawable -= amount;
         totalWithdrawn += amountAfterFee;
         totalFeeCollected += fee;
@@ -80,15 +103,34 @@ import "./AutoStake.sol";
     }
 
     /**
-     * @notice Calculate the maximum amount of sHEGIC token available for withdrawable
-     * by a user.
-     * @param account The user's account address
-     * @return amount The user's withdrawable amount
+     * @notice Determine if withdrawl is opened.
+     * @return true if all rHEGIC have been redeemed & staked; false if otherwise
      */
-    function getUserWithdrawableAmount(address account) override public view returns (uint amount) {
-        amount = userData[account].amountDeposited.sub(userData[account].amountWithdrawn);
-        if (totalWithdrawable < amount) {
-            amount = totalWithdrawable;
+    function allowWithdrawal() public view returns (bool) {
+        if (totalRedeemed == totalDeposited) {
+            return true;
+        } else {
+            return false;
         }
+    }
+
+    /**
+     * @notice Claim ETH and WBTC profit from the staking pool contract, and calculate
+     * how much profit should be distributed to each staked token.
+     */
+    function claimStakingProfit() internal {
+        uint ethBalanceBeforeClaim = address(this).balance;
+        uint wbtcBalanceBeforeClaim = WBTC.balanceOf(address(this));
+
+        sHEGIC.claimAllProfit();
+
+        uint ethBalanceAfterClaim = address(this).balance;
+        uint wbtcBalanceAfterClaim = WBTC.balanceOf(address(this));
+
+        uint ethClaimed = ethBalanceAfterClaim.sub(ethBalanceBeforeClaim);
+        uint wbtcClaimed = wbtcBalanceAfterClaim.sub(wbtcBalanceBeforeClaim);
+
+        ethProfitPerToken += ethClaimed.mul(ACCURACY).div(totalWithdrawable);
+        wbtcProfitPerToken += wbtcClaimed.mul(ACCURACY).div(totalWithdrawable);
     }
 }
