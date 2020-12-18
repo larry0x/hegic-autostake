@@ -7,36 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 
-contract FakeHegicToken is Ownable, ERC20("Fake HEGIC", "FakeHEGIC") {
-    constructor() {
-        _mint(msg.sender, 100e18);
-    }
-
-    function mint(uint amount) external onlyOwner {
-        _mint(msg.sender, amount);
-    }
-
-    function getTokenName() external pure returns (string memory) {
-        return "Fake HEGIC";
-    }
-}
-
-
-contract FakeRHegicToken is Ownable, ERC20("Fake rHEGIC", "FakeRHEGIC") {
-    constructor() {
-        _mint(msg.sender, 100e18);
-    }
-
-    function mint(uint amount) external onlyOwner {
-        _mint(msg.sender, amount);
-    }
-
-    function getTokenName() external pure returns (string memory) {
-        return "Fake rHEGIC";
-    }
-}
-
-
 contract IOUTokenRedemption is Ownable {
     using SafeMath for uint;
     using SafeERC20 for ERC20;
@@ -97,24 +67,77 @@ contract IOUTokenRedemption is Ownable {
 }
 
 
-contract FakeHegicStakingPool is ERC20("Fake sHEGIC", "FakeSHEGIC") {
-    using SafeMath for uint;
-    using SafeERC20 for ERC20;
-
-    ERC20 public immutable inputToken;
-
-    constructor(ERC20 _inputToken) {
-        inputToken = _inputToken;
+contract FakeWBTC is Ownable, ERC20("Fake WBTC", "FakeWBTC") {
+    constructor() {
+        _setupDecimals(8);
     }
 
-    function deposit(uint amount) external {
-        inputToken.safeTransferFrom(msg.sender, address(this), amount);
-        _mint(msg.sender, amount);
+    function mint(address recipient, uint amount) external {
+        _mint(recipient, amount);
     }
 }
 
 
-contract FakeZHegicToken is Ownable, ERC20("Fake zHEGIC", "FakeZHEGIC") {
+contract FakeHegic is Ownable, ERC20("Fake HEGIC", "FakeHEGIC") {
+    constructor() {
+        _mint(msg.sender, 100e18);
+    }
+
+    function mint(uint amount) external onlyOwner {
+        _mint(msg.sender, amount);
+    }
+
+    function getTokenName() external pure returns (string memory) {
+        return "Fake HEGIC";
+    }
+}
+
+
+contract FakeRHegic is Ownable, ERC20("Fake rHEGIC", "FakeRHEGIC") {
+    constructor() {
+        _mint(msg.sender, 100e18);
+    }
+
+    function mint(uint amount) external onlyOwner {
+        _mint(msg.sender, amount);
+    }
+
+    function getTokenName() external pure returns (string memory) {
+        return "Fake rHEGIC";
+    }
+}
+
+
+contract FakeSHegic is ERC20("Fake sHEGIC", "FakeSHEGIC") {
+    using SafeMath for uint;
+    using SafeERC20 for ERC20;
+
+    ERC20 public HEGIC;
+    FakeWBTC public WBTC;
+
+    constructor(ERC20 _HEGIC, FakeWBTC _WBTC) {
+        HEGIC = _HEGIC;
+        WBTC = _WBTC;
+    }
+
+    // Payable
+    receive() external payable {}
+
+    function deposit(uint amount) external {
+        HEGIC.safeTransferFrom(msg.sender, address(this), amount);
+        _mint(msg.sender, amount);
+    }
+
+    // Simply sends fixed amounts of ETH & WBTC to simulate the behavior of the
+    // actual claimAllProfit function.
+    function claimAllProfit() external {
+        payable(msg.sender).transfer(100000000000000000);  // 0.1 ether
+        WBTC.mint(msg.sender, 1000000);  // 0.01 WBTC
+    }
+}
+
+
+contract FakeZHegic is Ownable, ERC20("Fake zHEGIC", "FakeZHEGIC") {
     address public pool;
 
     modifier onlyPool {
@@ -132,25 +155,23 @@ contract FakeZHegicToken is Ownable, ERC20("Fake zHEGIC", "FakeZHEGIC") {
 }
 
 
-/*
- * To simulate the floating conversion rate of zHEGIC/HEGIC, here we start with
- * 1:1, then increase 5% per block.
- * e.g. One blocks after the contract is created, 1 zHEGIC will worth 1.05 HEGIC;
- * another block after that, 1 zHEGIC will worth 1.10 HEGIC, etc.
- */
-contract FakeHegicPoolV2 {
+// To simulate the floating conversion rate of zHEGIC/HEGIC, here we start with
+// 1:1, then increase a preset percentage per block.
+// e.g. One blocks after the contract is created, 1 zHEGIC will worth 1.05 HEGIC;
+// another block after that, 1 zHEGIC will worth 1.10 HEGIC, etc.
+contract FakeZLotPool {
     using SafeMath for uint;
     using SafeERC20 for ERC20;
 
-    ERC20 public immutable inputToken;
-    FakeZHegicToken public immutable zToken;
+    ERC20 public immutable HEGIC;
+    FakeZHegic public immutable zHEGIC;
 
     uint public blockCreated;
     uint rateIncreasePerBlock;
 
-    constructor(ERC20 _inputToken, FakeZHegicToken _zToken, uint _rateIncreatePerBlock) {
-        inputToken = _inputToken;
-        zToken = _zToken;
+    constructor(ERC20 _HEGIC, FakeZHegic _zHEGIC, uint _rateIncreatePerBlock) {
+        HEGIC = _HEGIC;
+        zHEGIC = _zHEGIC;
         blockCreated = block.number;
         rateIncreasePerBlock = _rateIncreatePerBlock;
     }
@@ -159,7 +180,7 @@ contract FakeHegicPoolV2 {
         uint blocksPassed = (block.number).sub(blockCreated);
         zTokenAmount = amount.mul(100).div(blocksPassed.mul(rateIncreasePerBlock).add(100));
 
-        inputToken.safeTransferFrom(msg.sender, address(this), amount);
-        zToken.mint(msg.sender, zTokenAmount);
+        HEGIC.safeTransferFrom(msg.sender, address(this), amount);
+        zHEGIC.mint(msg.sender, zTokenAmount);
     }
 }

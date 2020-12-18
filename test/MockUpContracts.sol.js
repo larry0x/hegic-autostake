@@ -6,60 +6,79 @@ const expect = chai.expect;
 chai.use(require('chai-as-promised'));
 
 //------------------------------------------------------------------------------
-// Test FakeHegicToken
+// Test FakeWBTC
 //------------------------------------------------------------------------------
 
-describe('FakeHegicToken', () => {
+describe('FakeWBTC', () => {
   let owner;
   let user;
-  let FakeHegicTokenInstance;
+  let FakeWBTCInstance;
 
   beforeEach(async () => {
     [ owner, user ] = await ethers.getSigners();
 
-    const FakeHegicToken = await ethers.getContractFactory('FakeHegicToken');
-    FakeHegicTokenInstance = await FakeHegicToken.deploy();
-  })
-
-  it('should mint the owner 100 tokens when deployed, and have 100 total supply', async () => {
-    const ownerBalance = await FakeHegicTokenInstance.balanceOf(owner.address);
-    expect(ownerBalance).to.equal('100000000000000000000');
-
-    const totalSupply = await FakeHegicTokenInstance.totalSupply();
-    expect(totalSupply).to.equal('100000000000000000000');
+    const FakeWBTC = await ethers.getContractFactory('FakeWBTC');
+    FakeWBTCInstance = await FakeWBTC.deploy();
   });
 
-  it('should transfer 50 tokens from owner to user', async () => {
-    await FakeHegicTokenInstance.connect(owner)
-      .transfer(user.address, '50000000000000000000');
+  it('should mint the user 100 WBTC', async () => {
+    FakeWBTCInstance.connect(owner).mint(user.address, '10000000000');
 
-    const ownerBalance = await FakeHegicTokenInstance.balanceOf(owner.address);
-    expect(ownerBalance).to.equal('50000000000000000000');
-
-    const userBalance = await FakeHegicTokenInstance.balanceOf(user.address);
-    expect(userBalance).to.equal('50000000000000000000');
-  });
-
-  it('should return the corrent token name', async () => {
-    const tokenName = await FakeHegicTokenInstance.getTokenName();
-    expect(tokenName).to.equal('Fake HEGIC');
+    const balance = await FakeWBTCInstance.balanceOf(user.address);
+    expect(balance).to.equal('10000000000');
   });
 });
 
 //------------------------------------------------------------------------------
-// Test FakeRHegicToken
+// Test FakeHegic
 //------------------------------------------------------------------------------
 
-describe('FakeRHegicToken', () => {
-  let FakeRHegicTokenInstance;
+describe('FakeHegic', () => {
+  let owner;
+  let user;
+  let FakeHegicInstance;
 
   beforeEach(async () => {
-    const FakeRHegicToken = await ethers.getContractFactory('FakeRHegicToken');
-    FakeRHegicTokenInstance = await FakeRHegicToken.deploy();
+    [ owner, user ] = await ethers.getSigners();
+
+    const FakeHegic = await ethers.getContractFactory('FakeHegic');
+    FakeHegicInstance = await FakeHegic.deploy();
+  })
+
+  it('should mint the owner 100 tokens when deployed, and have 100 total supply', async () => {
+    const ownerBalance = await FakeHegicInstance.balanceOf(owner.address);
+    expect(ownerBalance).to.equal('100000000000000000000');
+
+    const totalSupply = await FakeHegicInstance.totalSupply();
+    expect(totalSupply).to.equal('100000000000000000000');
+  });
+
+  it('should transfer 50 tokens from owner to user', async () => {
+    await FakeHegicInstance.connect(owner)
+      .transfer(user.address, '50000000000000000000');
+
+    const ownerBalance = await FakeHegicInstance.balanceOf(owner.address);
+    expect(ownerBalance).to.equal('50000000000000000000');
+
+    const userBalance = await FakeHegicInstance.balanceOf(user.address);
+    expect(userBalance).to.equal('50000000000000000000');
+  });
+});
+
+//------------------------------------------------------------------------------
+// Test FakeRHegic
+//------------------------------------------------------------------------------
+
+describe('FakeRHegic', () => {
+  let FakeRHegicInstance;
+
+  beforeEach(async () => {
+    const FakeRHegic = await ethers.getContractFactory('FakeRHegic');
+    FakeRHegicInstance = await FakeRHegic.deploy();
   });
 
   it('should return the correct token name', async () => {
-    const tokenName = await FakeRHegicTokenInstance.getTokenName();
+    const tokenName = await FakeRHegicInstance.getTokenName();
     expect(tokenName).to.equal('Fake rHEGIC');
   });
 });
@@ -70,34 +89,34 @@ describe('FakeRHegicToken', () => {
 
 describe('IOUTokenRedemption', () => {
   let owner;
-  let FakeHegicTokenInstance;
-  let FakeRHegicTokenInstance;
+  let FakeHegicInstance;
+  let FakeRHegicInstance;
   let IOUTokenRedemptionInstance;
 
   beforeEach(async () => {
     [ owner ] = await ethers.getSigners();
 
-    const FakeHegicToken = await ethers.getContractFactory('FakeHegicToken');
-    FakeHegicTokenInstance = await FakeHegicToken.deploy();
+    const FakeHegic = await ethers.getContractFactory('FakeHegic');
+    FakeHegicInstance = await FakeHegic.deploy();
 
-    const FakeRHegicToken = await ethers.getContractFactory('FakeRHegicToken');
-    FakeRHegicTokenInstance = await FakeRHegicToken.deploy();
+    const FakeRHegic = await ethers.getContractFactory('FakeRHegic');
+    FakeRHegicInstance = await FakeRHegic.deploy();
 
     const IOUTokenRedemption = await ethers.getContractFactory('IOUTokenRedemption');
     IOUTokenRedemptionInstance = await IOUTokenRedemption
-      .deploy(FakeRHegicTokenInstance.address, FakeHegicTokenInstance.address, 5);
+      .deploy(FakeRHegicInstance.address, FakeHegicInstance.address, 5);
 
-    await FakeHegicTokenInstance.connect(owner)
+    await FakeHegicInstance.connect(owner)
       .transfer(IOUTokenRedemptionInstance.address, '100000000000000000000');
 
-    await FakeRHegicTokenInstance.connect(owner)
+    await FakeRHegicInstance.connect(owner)
       .approve(IOUTokenRedemptionInstance.address, '100000000000000000000');
 
     await IOUTokenRedemptionInstance.connect(owner).deposit('50000000000000000000');
   });
 
   it('should take rHEGIC deposit and record relevant data in state variables', async () => {
-    const balance = await FakeRHegicTokenInstance.balanceOf(IOUTokenRedemptionInstance.address);
+    const balance = await FakeRHegicInstance.balanceOf(IOUTokenRedemptionInstance.address);
     expect(balance).to.equal('50000000000000000000');
 
     const depositData = await IOUTokenRedemptionInstance.deposits(owner.address);
@@ -111,7 +130,7 @@ describe('IOUTokenRedemption', () => {
 
   it('should transfer correct amount of output token user redeems', async () => {
     await IOUTokenRedemptionInstance.connect(owner).redeem();
-    const amountRedeemed = await FakeHegicTokenInstance.balanceOf(owner.address);
+    const amountRedeemed = await FakeHegicInstance.balanceOf(owner.address);
 
     const blocksToRelease = await IOUTokenRedemptionInstance.blocksToRelease();
     const currentBlock = await ethers.provider.getBlockNumber();
@@ -125,37 +144,61 @@ describe('IOUTokenRedemption', () => {
 });
 
 //------------------------------------------------------------------------------
-// Test FakeHegicStakingPool
+// Test FakeSHegic
 //------------------------------------------------------------------------------
 
-describe('FakeHegicStakingPool', () => {
+describe('FakeSHegic', () => {
   let owner;
-  let FakeHegicTokenInstance;
-  let FakeHegicStakingPoolInstance;
+  let FakeWBTCInstance;
+  let FakeHegicInstance;
+  let FakeSHegicInstance;
 
   beforeEach(async () => {
     [ owner ] = await ethers.getSigners();
 
-    const FakeHegicToken = await ethers.getContractFactory('FakeHegicToken');
-    FakeHegicTokenInstance = await FakeHegicToken.deploy();
+    const FakeWBTC = await ethers.getContractFactory('FakeWBTC');
+    FakeWBTCInstance = await FakeWBTC.deploy();
 
-    const FakeHegicStakingPool = await ethers.getContractFactory('FakeHegicStakingPool');
-    FakeHegicStakingPoolInstance = await FakeHegicStakingPool
-      .deploy(FakeHegicTokenInstance.address);
+    const FakeHegic = await ethers.getContractFactory('FakeHegic');
+    FakeHegicInstance = await FakeHegic.deploy();
+
+    const FakeSHegic = await ethers.getContractFactory('FakeSHegic');
+    FakeSHegicInstance = await FakeSHegic
+      .deploy(FakeHegicInstance.address, FakeWBTCInstance.address);
+
+    // Fund sHEGIC contract some ether for use in `claimAllProfit` function
+    await owner.sendTransaction({
+      to: FakeSHegicInstance.address,
+      value: ethers.utils.parseEther('1')
+    });
   });
 
   it('should take 50 HEGIC deposit and issue 50 sHEGIC back', async () => {
-    await FakeHegicTokenInstance.connect(owner)
-      .approve(FakeHegicStakingPoolInstance.address, '50000000000000000000');
+    await FakeHegicInstance.connect(owner)
+      .approve(FakeSHegicInstance.address, '50000000000000000000');
 
-    await FakeHegicStakingPoolInstance.connect(owner)
+    await FakeSHegicInstance.connect(owner)
       .deposit('50000000000000000000');
 
-    const poolBalance = await FakeHegicTokenInstance.balanceOf(FakeHegicStakingPoolInstance.address);
+    const poolBalance = await FakeHegicInstance.balanceOf(FakeSHegicInstance.address);
     expect(poolBalance).to.equal('50000000000000000000');
 
-    const userBalance = await FakeHegicStakingPoolInstance.balanceOf(owner.address);
+    const userBalance = await FakeSHegicInstance.balanceOf(owner.address);
     expect(userBalance).to.equal('50000000000000000000');
+  });
+
+  it('should transfer 0.1 ETH and 0.01 WBTC when claimAllProfit is called', async () => {
+    const ethBalanceBefore = await owner.getBalance();
+
+    const tx = await FakeSHegicInstance.connect(owner).claimAllProfit();
+    const receipt = await tx.wait();
+    const gas = tx.gasPrice.mul(receipt.gasUsed);
+
+    const ethBalanceAfter = await owner.getBalance();
+    expect(ethBalanceAfter.sub(ethBalanceBefore).add(gas)).to.equal('100000000000000000');
+
+    const wbtcBalance = await FakeWBTCInstance.balanceOf(owner.address);
+    expect(wbtcBalance).to.equal('1000000');
   });
 });
 
@@ -163,37 +206,37 @@ describe('FakeHegicStakingPool', () => {
 // Test Fake zLOT contracts
 //------------------------------------------------------------------------------
 
-describe('FakeZHegicToken & FakeHegicPoolV2', () => {
+describe('FakeZHegic & FakeZLotPool', () => {
   let owner;
-  let FakeHegicTokenInstance;
-  let FakeZHegicTokenInstance;
-  let FakeHegicPoolV2Instance;
+  let FakeHegicInstance;
+  let FakeZHegicInstance;
+  let FakeZLotPoolInstance;
 
   beforeEach(async () => {
     [ owner ] = await ethers.getSigners();
 
-    const FakeHegicToken = await ethers.getContractFactory('FakeHegicToken');
-    FakeHegicTokenInstance = await FakeHegicToken.deploy();
+    const FakeHegic = await ethers.getContractFactory('FakeHegic');
+    FakeHegicInstance = await FakeHegic.deploy();
 
-    const FakeZHegicToken = await ethers.getContractFactory('FakeZHegicToken');
-    FakeZHegicTokenInstance = await FakeZHegicToken.deploy();
+    const FakeZHegic = await ethers.getContractFactory('FakeZHegic');
+    FakeZHegicInstance = await FakeZHegic.deploy();
 
-    const FakeHegicPoolV2 = await ethers.getContractFactory('FakeHegicPoolV2');
-    FakeHegicPoolV2Instance = await FakeHegicPoolV2
-      .deploy(FakeHegicTokenInstance.address, FakeZHegicTokenInstance.address, 5);
+    const FakeZLotPool = await ethers.getContractFactory('FakeZLotPool');
+    FakeZLotPoolInstance = await FakeZLotPool
+      .deploy(FakeHegicInstance.address, FakeZHegicInstance.address, 5);
 
-    await FakeZHegicTokenInstance.connect(owner).setPool(FakeHegicPoolV2Instance.address);
+    await FakeZHegicInstance.connect(owner).setPool(FakeZLotPoolInstance.address);
 
-    await FakeHegicTokenInstance.connect(owner)
-      .approve(FakeHegicPoolV2Instance.address, '100000000000000000000');
+    await FakeHegicInstance.connect(owner)
+      .approve(FakeZLotPoolInstance.address, '100000000000000000000');
   });
 
   it('should take HEGIC deposit and mint correct amount of zHEGIC token', async () => {
     for (i = 0; i < 4; i++) {
-      await FakeHegicPoolV2Instance.connect(owner).deposit('25000000000000000000');
+      await FakeZLotPoolInstance.connect(owner).deposit('25000000000000000000');
     }
 
-    const balance = await FakeZHegicTokenInstance.balanceOf(owner.address);
+    const balance = await FakeZHegicInstance.balanceOf(owner.address);
     expect(balance).to.equal('81803232998885172797');
   });
 })
