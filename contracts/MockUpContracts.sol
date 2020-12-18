@@ -128,11 +128,21 @@ contract FakeSHegic is ERC20("Fake sHEGIC", "FakeSHEGIC") {
         _mint(msg.sender, amount);
     }
 
-    // Simply sends fixed amounts of ETH & WBTC to simulate the behavior of the
-    // actual claimAllProfit function.
+    // If the sender holds nonzero amount of sHEGIC, simply sends fixed amounts
+    // of ETH & WBTC. Simulates the behavior of the actual claimAllProfit function.
     function claimAllProfit() external {
-        payable(msg.sender).transfer(100000000000000000);  // 0.1 ether
-        WBTC.mint(msg.sender, 1000000);  // 0.01 WBTC
+        if (balanceOf(msg.sender) > 0) {
+            payable(msg.sender).transfer(100000000000000000);  // 0.1 ether
+            WBTC.mint(msg.sender, 1000000);  // 0.01 WBTC
+        }
+    }
+
+    function profitOf(address account, uint asset) public view returns (uint profit) {
+        if (asset == 0) {
+            profit = 1000000;  // 0 = WBTC
+        } else {
+            profit = 100000000000000000;  // 1 = ETH
+        }
     }
 }
 

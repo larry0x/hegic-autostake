@@ -224,4 +224,22 @@ describe('AutoStakeToSHegic', () => {
     await expect(AutoStakeToSHegicInstance.connect(owner).withdrawStakedHEGIC())
       .to.be.rejectedWith('No sHEGIC token available for withdrawal');
   });
+
+  it('should calculate amount of staking profit collected correctly', async () => {
+    await AutoStakeToSHegicInstance.connect(owner).depositToRedemptionContract();
+
+    for (i = 0; i < 5; i++) {
+      await AutoStakeToSHegicInstance.connect(owner).redeemAndStake();
+    }
+
+    await AutoStakeToSHegicInstance.connect(user2).withdrawStakedHEGIC();
+    await AutoStakeToSHegicInstance.connect(user1).withdrawStakedHEGIC();
+
+    // At this point, the contract should have collected 0.2 ETH & 0.02 WBTC profit;
+    // another 0.1 ETH & 0.01 WBTC to be collected
+    const [ ethProfit, wbtcProfit ] = await AutoStakeToSHegicInstance.getStakingProfit();
+
+    expect(ethProfit).to.equal('300000000000000000');
+    expect(wbtcProfit).to.equal('3000000');
+  });
 });

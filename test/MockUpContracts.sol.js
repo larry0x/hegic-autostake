@@ -166,6 +166,13 @@ describe('FakeSHegic', () => {
     FakeSHegicInstance = await FakeSHegic
       .deploy(FakeHegicInstance.address, FakeWBTCInstance.address);
 
+    // Deposit 50 HEGIC, get 50 sHEGIC
+    await FakeHegicInstance.connect(owner)
+      .approve(FakeSHegicInstance.address, '50000000000000000000');
+
+    await FakeSHegicInstance.connect(owner)
+      .deposit('50000000000000000000');
+
     // Fund sHEGIC contract some ether for use in `claimAllProfit` function
     await owner.sendTransaction({
       to: FakeSHegicInstance.address,
@@ -174,12 +181,6 @@ describe('FakeSHegic', () => {
   });
 
   it('should take 50 HEGIC deposit and issue 50 sHEGIC back', async () => {
-    await FakeHegicInstance.connect(owner)
-      .approve(FakeSHegicInstance.address, '50000000000000000000');
-
-    await FakeSHegicInstance.connect(owner)
-      .deposit('50000000000000000000');
-
     const poolBalance = await FakeHegicInstance.balanceOf(FakeSHegicInstance.address);
     expect(poolBalance).to.equal('50000000000000000000');
 

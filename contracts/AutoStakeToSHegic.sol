@@ -26,6 +26,9 @@ import "./AutoStake.sol";
     uint public ethProfitPerToken = 0;
     uint public wbtcProfitPerToken = 0;
 
+    uint public totalEthProfitClaimed = 0;
+    uint public totalWbtcProfitClaimed = 0;
+
     constructor(
         IERC20 _WBTC,
         IERC20 _HEGIC,
@@ -132,5 +135,22 @@ import "./AutoStake.sol";
 
         ethProfitPerToken += ethClaimed.mul(ACCURACY).div(totalWithdrawable);
         wbtcProfitPerToken += wbtcClaimed.mul(ACCURACY).div(totalWithdrawable);
+
+        totalEthProfitClaimed += ethClaimed;
+        totalWbtcProfitClaimed += wbtcClaimed;
+    }
+
+    /**
+     * @notice Helper function. Calculates the total amount of staking profits
+     * that have been claimed or can be claimed.
+     * @return ethProfit The amount of profit in ETH
+     * @return wbtcProfit The amount of profit in WBTC
+     */
+    function getStakingProfit() public view returns (uint ethProfit, uint wbtcProfit) {
+        uint ethProfitToBeClaimed = sHEGIC.profitOf(address(this), 1);
+        uint wbtcProfitToBeClaimed = sHEGIC.profitOf(address(this), 0);
+
+        ethProfit = totalEthProfitClaimed.add(ethProfitToBeClaimed);
+        wbtcProfit = totalWbtcProfitClaimed.add(wbtcProfitToBeClaimed);
     }
 }

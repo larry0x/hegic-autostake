@@ -9,4 +9,5 @@ interface IHegicStakingPool {
     function deposit(uint _amount) external;
     function transfer(address recipient, uint256 amount) external returns (bool);
     function claimAllProfit() external;
+    function profitOf(address _account, uint _asset) external view returns (uint);
 }
