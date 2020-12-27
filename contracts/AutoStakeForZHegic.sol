@@ -18,8 +18,8 @@ import "./AutoStake.sol";
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
-    IERC20 public zHEGIC;
-    IZLotPool public zLotPool;
+    IERC20 public immutable zHEGIC;
+    IZLotPool public immutable zLotPool;
 
     constructor(
         IERC20 _HEGIC,
@@ -27,15 +27,15 @@ import "./AutoStake.sol";
         IERC20 _zHEGIC,
         IZLotPool _zLotPool,
         IGradualTokenSwap _GTS,
-        uint feeRate,
-        address feeRecipient
+        uint _feeRate,
+        address _feeRecipient
     )
     AutoStake(_HEGIC, _rHEGIC, _GTS)
     {
         zHEGIC = _zHEGIC;
         zLotPool = _zLotPool;
-        _setFeeRate(feeRate);
-        _setFeeRecipient(feeRecipient);
+        feeRate = _feeRate;
+        feeRecipient = _feeRecipient;
     }
 
     /**

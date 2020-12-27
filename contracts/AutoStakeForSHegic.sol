@@ -34,15 +34,15 @@ import "./AutoStake.sol";
         IERC20 _rHEGIC,
         ISHegic _sHEGIC,
         IGradualTokenSwap _GTS,
-        uint feeRate,
-        address feeRecipient
+        uint _feeRate,
+        address _feeRecipient
     )
     AutoStake(_HEGIC, _rHEGIC, _GTS)
     {
         WBTC = _WBTC;
         sHEGIC = _sHEGIC;
-        _setFeeRate(feeRate);
-        _setFeeRecipient(feeRecipient);
+        feeRate = _feeRate;
+        feeRecipient = _feeRecipient;
     }
 
     // Required for contract to receive ETH

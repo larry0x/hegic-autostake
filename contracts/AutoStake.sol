@@ -56,7 +56,9 @@ abstract contract AutoStake is Ownable {
      * @param _rate The new rate in basis points. E.g. 200 = 2%
      */
     function setFeeRate(uint _rate) external onlyOwner {
-        _setFeeRate(_rate);
+        require(_rate >= 0, "Rate too low!");
+        require(_rate <= 500, "Rate too high!");
+        feeRate = _rate;
     }
 
     /**
@@ -64,7 +66,8 @@ abstract contract AutoStake is Ownable {
      * @param _recipient The new recipient address
      */
     function setFeeRecipient(address _recipient) external onlyOwner {
-        _setFeeRecipient(_recipient);
+        require(_recipient != address(0), "Cannot set recipient to zero address");
+        feeRecipient = _recipient;
     }
 
     /**
@@ -142,16 +145,4 @@ abstract contract AutoStake is Ownable {
     // Functions to be overriden
     function redeemAndStake() virtual external returns (uint, uint) {}
     function withdraw() virtual external {}
-
-    // Internal versions of setFee{Rate,Recipient} functions
-    function _setFeeRate(uint _rate) internal {
-        require(_rate >= 0, "Rate too low!");
-        require(_rate <= 500, "Rate too high!");
-        feeRate = _rate;
-    }
-
-    function _setFeeRecipient(address _recipient) internal {
-        require(_recipient != address(0), "Cannot set recipient to zero address");
-        feeRecipient = _recipient;
-    }
 }
