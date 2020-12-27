@@ -7,7 +7,7 @@ const addresses = {
   sHEGIC:   '0xf4128B00AFdA933428056d0F0D1d7652aF7e2B35',
   zHEGIC:   '0x837010619aeb2AE24141605aFC8f66577f6fb2e7',
   zLotPool: '0x9E4E091fC8921FE3575eab1c9a6446114f3b5Ef2',
-  GST:      ''  // TBD
+  GTS:      ''  // TBD
 }
 
 const deploy = async () => {
@@ -21,7 +21,7 @@ const deploy = async () => {
     addresses.HEGIC,
     addresses.rHEGIC,
     addresses.sHEGIC,
-    addresses.GST,
+    addresses.GTS,
     200,
     recipient.address
   );
@@ -33,7 +33,7 @@ const deploy = async () => {
     addresses.rHEGIC,
     addresses.zHEGIC,
     addresses.zLotPool,
-    addresses.GST,
+    addresses.GTS,
     200,
     recipient.address
   );

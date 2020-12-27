@@ -43,7 +43,7 @@ const deploy = async () => {
   console.log('FakeZLotPool deployed to', FakeZLotPoolInstance.address);
 
   //--------------------
-  // GST
+  // GTS
   //--------------------
 
   const GradualTokenSwap = await ethers.getContractFactory('GradualTokenSwapUpgradable');
