@@ -100,25 +100,37 @@ contract FakeZHegic is Ownable, ERC20("Fake zHEGIC", "FakeZHEGIC") {
 // 1:1, then increase a preset percentage per block.
 // e.g. One blocks after the contract is created, 1 zHEGIC will worth 1.05 HEGIC;
 // another block after that, 1 zHEGIC will worth 1.10 HEGIC, etc.
-contract FakeZLotPool {
+contract FakeZLotPool is Ownable {
     using SafeMath for uint;
     using SafeERC20 for ERC20;
 
     ERC20 public immutable HEGIC;
     FakeZHegic public immutable zHEGIC;
 
-    uint public blockCreated;
+    uint public start;
     uint rateIncreasePerBlock;
 
     constructor(ERC20 _HEGIC, FakeZHegic _zHEGIC, uint _rateIncreasePerBlock) {
         HEGIC = _HEGIC;
         zHEGIC = _zHEGIC;
-        blockCreated = block.number;
+        start = block.number;
+        rateIncreasePerBlock = _rateIncreasePerBlock;
+    }
+
+    /**
+     * @dev Reset the start block to the current block. Added this function so I
+     * can reuse the same contract instances for multiple tests. Same goes for `setRateIncrease`.
+     */
+    function resetStartBlock() external onlyOwner {
+        start = block.number;
+    }
+
+    function setRateIncrease(uint _rateIncreasePerBlock) external onlyOwner {
         rateIncreasePerBlock = _rateIncreasePerBlock;
     }
 
     function deposit(uint amount) external returns (uint zTokenAmount) {
-        uint blocksPassed = (block.number).sub(blockCreated);
+        uint blocksPassed = (block.number).sub(start);
         zTokenAmount = amount.mul(100).div(blocksPassed.mul(rateIncreasePerBlock).add(100));
 
         HEGIC.safeTransferFrom(msg.sender, address(this), amount);
