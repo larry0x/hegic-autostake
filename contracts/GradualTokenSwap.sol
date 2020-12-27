@@ -15,6 +15,8 @@ abstract contract ERC20Recovery is Ownable {
 
 
 // Forked from https://github.com/hegic/GradualTokenSwap/blob/master/contracts/GradualTokenSwap.sol
+// Changed the release schedule from timestamp-based to block number-based so that
+// it's easier to test in a local testnet (e.g. Ganache)
 contract GradualTokenSwap is ERC20Recovery {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -57,12 +59,12 @@ contract GradualTokenSwap is ERC20Recovery {
     }
 
     function unlocked(address account) public view returns (uint256) {
-        if(block.timestamp < start)
+        if(block.number < start)
             return 0;
-        if (block.timestamp >= start.add(duration)) {
+        if (block.number >= start.add(duration)) {
             return provided[account];
         } else {
-            return provided[account].mul(block.timestamp.sub(start)).div(duration);
+            return provided[account].mul(block.number.sub(start)).div(duration);
         }
     }
 }

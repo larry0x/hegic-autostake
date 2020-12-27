@@ -43,6 +43,8 @@ describe('FakeHegic', () => {
 
     const FakeHegic = await ethers.getContractFactory('FakeHegic');
     FakeHegicInstance = await FakeHegic.deploy();
+
+    await FakeHegicInstance.connect(owner).mint('100000000000000000000');
   })
 
   it('should mint the owner 100 tokens when deployed, and have 100 total supply', async () => {
@@ -78,68 +80,8 @@ describe('FakeRHegic', () => {
   });
 
   it('should return the correct token name', async () => {
-    const tokenName = await FakeRHegicInstance.getTokenName();
+    const tokenName = await FakeRHegicInstance.name();
     expect(tokenName).to.equal('Fake rHEGIC');
-  });
-});
-
-//------------------------------------------------------------------------------
-// Test IOUTokenRedemption
-//------------------------------------------------------------------------------
-
-describe('IOUTokenRedemption', () => {
-  let owner;
-  let FakeHegicInstance;
-  let FakeRHegicInstance;
-  let IOUTokenRedemptionInstance;
-
-  beforeEach(async () => {
-    [ owner ] = await ethers.getSigners();
-
-    const FakeHegic = await ethers.getContractFactory('FakeHegic');
-    FakeHegicInstance = await FakeHegic.deploy();
-
-    const FakeRHegic = await ethers.getContractFactory('FakeRHegic');
-    FakeRHegicInstance = await FakeRHegic.deploy();
-
-    const IOUTokenRedemption = await ethers.getContractFactory('IOUTokenRedemption');
-    IOUTokenRedemptionInstance = await IOUTokenRedemption
-      .deploy(FakeRHegicInstance.address, FakeHegicInstance.address, 5);
-
-    await FakeHegicInstance.connect(owner)
-      .transfer(IOUTokenRedemptionInstance.address, '100000000000000000000');
-
-    await FakeRHegicInstance.connect(owner)
-      .approve(IOUTokenRedemptionInstance.address, '100000000000000000000');
-
-    await IOUTokenRedemptionInstance.connect(owner).deposit('50000000000000000000');
-  });
-
-  it('should take rHEGIC deposit and record relevant data in state variables', async () => {
-    const balance = await FakeRHegicInstance.balanceOf(IOUTokenRedemptionInstance.address);
-    expect(balance).to.equal('50000000000000000000');
-
-    const depositData = await IOUTokenRedemptionInstance.deposits(owner.address);
-    expect(depositData.amountDeposited).to.equal('50000000000000000000');
-  });
-
-  it('should reject if user attempts to make more than one deposit', async () => {
-    await expect(IOUTokenRedemptionInstance.connect(owner).deposit('50000000000000000000'))
-      .to.be.rejectedWith('This account has already deposited');
-  });
-
-  it('should transfer correct amount of output token user redeems', async () => {
-    await IOUTokenRedemptionInstance.connect(owner).redeem();
-    const amountRedeemed = await FakeHegicInstance.balanceOf(owner.address);
-
-    const blocksToRelease = await IOUTokenRedemptionInstance.blocksToRelease();
-    const currentBlock = await ethers.provider.getBlockNumber();
-    const userDeposit = await IOUTokenRedemptionInstance.deposits(owner.address);
-
-    const correctRedeemableAmount = BN(userDeposit.amountDeposited)
-      .mul(BN(currentBlock).sub(userDeposit.blockDeposited)).div(blocksToRelease);
-
-    expect(amountRedeemed).to.equal(correctRedeemableAmount);
   });
 });
 
@@ -165,6 +107,9 @@ describe('FakeSHegic', () => {
     const FakeSHegic = await ethers.getContractFactory('FakeSHegic');
     FakeSHegicInstance = await FakeSHegic
       .deploy(FakeHegicInstance.address, FakeWBTCInstance.address);
+
+    // Mint the owner 100 HEGIC
+    await FakeHegicInstance.connect(owner).mint('100000000000000000000');
 
     // Deposit 50 HEGIC, get 50 sHEGIC
     await FakeHegicInstance.connect(owner)
@@ -224,7 +169,9 @@ describe('FakeZHegic & FakeZLotPool', () => {
 
     const FakeZLotPool = await ethers.getContractFactory('FakeZLotPool');
     FakeZLotPoolInstance = await FakeZLotPool
-      .deploy(FakeHegicInstance.address, FakeZHegicInstance.address, 5);
+      .deploy(FakeHegicInstance.address, FakeZHegicInstance.address, 1);  // exchange rate goes up 1% every block
+
+    await FakeHegicInstance.connect(owner).mint('100000000000000000000');
 
     await FakeZHegicInstance.connect(owner).setPool(FakeZLotPoolInstance.address);
 
@@ -237,7 +184,12 @@ describe('FakeZHegic & FakeZLotPool', () => {
       await FakeZLotPoolInstance.connect(owner).deposit('25000000000000000000');
     }
 
+    // 1st deposit: 25e18 * 100 / 104 = 24038461538461538461
+    // 2nd deposit: 25e18 * 100 / 105 = 23809523809523809523
+    // 3rd deposit: 25e18 * 100 / 106 = 23584905660377358490
+    // 4th deposit: 25e18 * 100 / 107 = 23364485981308411214
+    // Sum: 94797376989671117688 (94.80 zHEGIC)
     const balance = await FakeZHegicInstance.balanceOf(owner.address);
-    expect(balance).to.equal('81803232998885172797');
+    expect(balance).to.equal('94797376989671117688');
   });
 })
