@@ -29,7 +29,7 @@ contract GradualTokenSwap is ERC20Recovery {
     mapping(address => uint) public released;
     mapping(address => uint) public provided;
 
-    constructor (uint256 _start, uint256 _duration, IERC20 _rHEGIC, IERC20 _HEGIC) {
+    constructor(uint256 _start, uint256 _duration, IERC20 _rHEGIC, IERC20 _HEGIC) {
         if(_start == 0) _start = block.timestamp;
         require(_duration > 0, "GTS: duration is 0");
 
@@ -71,26 +71,27 @@ contract GradualTokenSwap is ERC20Recovery {
 // The same GradualTokenSwap contract but with functions to modify some state variables,
 // so that I don't need to redeploy the contract everytime I run a test.
 contract GradualTokenSwapUpgradable is GradualTokenSwap {
-    function resetStateVariables(
+    constructor(
         uint256 _start,
         uint256 _duration,
         IERC20 _rHEGIC,
         IERC20 _HEGIC
     )
-    external onlyOwner {
-        duration = _duration;
-        start = _start;
+    GradualTokenSwap(_start, _duration, _rHEGIC, _HEGIC)
+    { }
+
+    function setTokenAddresses(IERC20 _rHEGIC, IERC20 _HEGIC) external onlyOwner {
         rHEGIC =_rHEGIC;
         HEGIC = _HEGIC;
     }
 
-    function resetUserData(
-        address _account,
-        uint _provided,
-        uint _released
-    )
-    external onlyOwner {
-        provided[_account] = _provided;
-        released[_account] = _released;
+    function setStateVariables(uint256 _start, uint256 _duration) external onlyOwner {
+        duration = _duration;
+        start = _start;
+    }
+
+    function resetUserData(address _account) external onlyOwner {
+        provided[_account] = 0;
+        released[_account] = 0;
     }
 }

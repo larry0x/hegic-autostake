@@ -10,30 +10,30 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 
-contract FakeWBTC is Ownable, ERC20("Fake WBTC", "FakeWBTC") {
+contract FakeWBTC is ERC20("Fake WBTC", "FakeWBTC") {
     constructor() {
         _setupDecimals(8);
     }
 
-    function mint(uint amount) external onlyOwner {
+    function mint(address recipient, uint amount) external {
+        _mint(recipient, amount);
+    }
+}
+
+
+contract FakeHegic is ERC20("Fake HEGIC", "FakeHEGIC") {
+    constructor() {}
+
+    function mint(uint amount) external {
         _mint(msg.sender, amount);
     }
 }
 
 
-contract FakeHegic is Ownable, ERC20("Fake HEGIC", "FakeHEGIC") {
+contract FakeRHegic is ERC20("Fake rHEGIC", "FakeRHEGIC") {
     constructor() {}
 
-    function mint(uint amount) external onlyOwner {
-        _mint(msg.sender, amount);
-    }
-}
-
-
-contract FakeRHegic is Ownable, ERC20("Fake rHEGIC", "FakeRHEGIC") {
-    constructor() {}
-
-    function mint(uint amount) external onlyOwner {
+    function mint(uint amount) external {
         _mint(msg.sender, amount);
     }
 }
@@ -68,7 +68,7 @@ contract FakeSHegic is ERC20("Fake sHEGIC", "FakeSHEGIC") {
         }
     }
 
-    function profitOf(address account, uint asset) public view returns (uint profit) {
+    function profitOf(address account, uint asset) public pure returns (uint profit) {
         if (asset == 0) {
             profit = 1000000;  // 0 = WBTC
         } else {

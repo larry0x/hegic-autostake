@@ -5,61 +5,66 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-import "./interfaces/IIOUTokenRedemption.sol";
+import "./interfaces/IGradualTokenSwap.sol";
 
 
+/**
+ * @title AutoStake
+ * @notice The base contract to be inherited by AutoStakeFor{S,Z}Hegic contracts,
+ * providing functionalities that control user deposit, refund claims, initial deposit
+ * to the GTS contract, and adjustment to fee parameters. Children contracts need
+ * to provide constructor, `redeemAndStake`, and `withdraw` functions.
+ */
 abstract contract AutoStake is Ownable {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
-    struct UserData {
-        uint amountDeposited;
-        uint amountWithdrawn;
-    }
+    IERC20 public immutable HEGIC;
+    IERC20 public immutable rHEGIC;
+    IGradualTokenSwap public immutable GTS;
 
-    IERC20 public HEGIC;
-    IERC20 public rHEGIC;
-    IIOUTokenRedemption public redemption;
-
-    uint public feeRate = 100;  // 1%
+    uint public feeRate = 100;  // in bases points, e.g. 100 --> 1%
     address public feeRecipient;
 
     bool public allowDeposit = true;
     bool public allowClaimRefund = true;
 
-    uint public totalDepositors = 0;
-    uint public totalDeposited = 0;
-    uint public totalRedeemed = 0;
-    uint public totalStaked = 0;
-    uint public totalWithdrawable = 0;
-    uint public totalWithdrawn = 0;  // Not Including fees
-    uint public totalFeeCollected = 0;
+    uint public totalDepositors = 0;      // number of depositors
+    uint public totalDeposited = 0;       // amount of rHEGIC deposit received
+    uint public totalRedeemed = 0;        // amount of HEGIC redeemed from rHEGIC
+    uint public totalStaked = 0;          // amount of s/zHEGIC received from staking pools
+    uint public totalWithdrawable = 0;    // amount of s/zHEGIC currently held by the contract & withdrawable by users
+    uint public totalWithdrawn = 0;       // amount of s/zHEGIC already withdrawn by users (excl. fees)
+    uint public totalFeeCollected = 0;    // amount of fees collected
+    uint public lastRedemptionTimestamp;  // timestamp of the last time `redeemAndStake` is performed
 
-    uint public lastRedemptionTimestamp;
-
-    mapping(address => UserData) public userData;
+    mapping(address => uint) public amountDeposited;  // amount of rHEGIC the user has deposited
+    mapping(address => uint) public amountWithdrawn;  // amount of s/zHEGIC the user has withdrawn (incl. fee)
 
     event Deposited(address account, uint amount);
-    event RefundClaimed(address account, uint amount);
+    event Refunded(address account, uint amount);
     event Withdrawn(address account, uint amountAfterFee, uint fee);
+
+    constructor(IERC20 _HEGIC, IERC20 _rHEGIC, IGradualTokenSwap _GTS) {
+        HEGIC = _HEGIC;
+        rHEGIC = _rHEGIC;
+        GTS = _GTS;
+    }
 
     /**
      * @notice Set the fee rate users are charged upon withdrawal.
-     * @param _feeRate The new rate in basis points. E.g. 200 = 2%
+     * @param _rate The new rate in basis points. E.g. 200 = 2%
      */
-    function setFeeRate(uint _feeRate) external onlyOwner {
-        require(_feeRate >= 0, "Rate too low!");
-        require(_feeRate <= 500, "Rate too high!");
-        feeRate = _feeRate;
+    function setFeeRate(uint _rate) external onlyOwner {
+        _setFeeRate(_rate);
     }
 
     /**
      * @notice Set the recipient address to fees generated.
-     * @param _feeRecipient The new recipient address
+     * @param _recipient The new recipient address
      */
-    function setFeeRecipient(address _feeRecipient) external onlyOwner {
-        require(_feeRecipient != address(0), "Cannot set recipient to zero address");
-        feeRecipient = _feeRecipient;
+    function setFeeRecipient(address _recipient) external onlyOwner {
+        _setFeeRecipient(_recipient);
     }
 
     /**
@@ -75,20 +80,19 @@ abstract contract AutoStake is Ownable {
 
     /**
      * @notice Deposits a given amount of rHEGIC to the contract.
-     * @param amount Amount of rHEGIC to be deposited, i.e. amount of convHEGIC to
-     * be minted
+     * @param amount Amount of rHEGIC to be deposited
      */
     function deposit(uint amount) external {
         require(allowDeposit, "New deposits no longer accepted");
         require(amount > 0, "Amount must be greater than zero");
 
-        if (userData[msg.sender].amountDeposited == 0) {
-            totalDepositors += 1;
-        }
-        totalDeposited += amount;
-
         rHEGIC.safeTransferFrom(msg.sender, address(this), amount);
-        userData[msg.sender].amountDeposited += amount;
+
+        amountDeposited[msg.sender] = amountDeposited[msg.sender].add(amount);
+        totalDeposited = totalDeposited.add(amount);
+        if (amountDeposited[msg.sender] == amount) {
+            totalDepositors = totalDepositors.add(1);
+        }
 
         emit Deposited(msg.sender, amount);
     }
@@ -99,35 +103,55 @@ abstract contract AutoStake is Ownable {
      * to attract enough deposit.
      */
     function claimRefund() external {
-        uint amount = userData[msg.sender].amountDeposited;
+        uint amount = amountDeposited[msg.sender];
 
         require(amount > 0, "User has not deposited any fund");
         require(allowClaimRefund, "Funds already transferred to the redemption contract");
 
         rHEGIC.safeTransfer(msg.sender, amount);
 
-        userData[msg.sender].amountDeposited = 0;
-        totalDeposited -= amount;
-        totalDepositors -= 1;
+        amountDeposited[msg.sender] = 0;
+        totalDeposited = totalDeposited.sub(amount);
+        totalDepositors = totalDepositors.sub(1);
 
-        emit RefundClaimed(msg.sender, amount);
+        emit Refunded(msg.sender, amount);
     }
 
     /**
      * @notice Deposit all rHEGIC to the redemption contract. Once this is executed,
      * no new deposit will be accepted, and users will not be able to claim rHEGIC refund.
      */
-    function depositToRedemptionContract() external onlyOwner {
+    function provideToGTS() external onlyOwner {
         require(totalDeposited > 0, "No rHEGIC token to deposit");
 
-        rHEGIC.approve(address(redemption), totalDeposited);
-        redemption.deposit(totalDeposited);
+        rHEGIC.approve(address(GTS), totalDeposited);
+        GTS.provide(totalDeposited);
 
         allowDeposit = false;
         allowClaimRefund = false;
     }
 
+    /**
+     * @notice Helper function. Get the amount of HEGIC currently redeemable from
+     * the GTS contract.
+     */
+    function getRedeemableAmount() external view returns (uint amount) {
+        amount = GTS.available(address(this));
+    }
+
     // Functions to be overriden
     function redeemAndStake() virtual external returns (uint, uint) {}
-    function withdrawStakedHEGIC() virtual external {}
+    function withdraw() virtual external {}
+
+    // Internal versions of setFee{Rate,Recipient} functions
+    function _setFeeRate(uint _rate) internal {
+        require(_rate >= 0, "Rate too low!");
+        require(_rate <= 500, "Rate too high!");
+        feeRate = _rate;
+    }
+
+    function _setFeeRecipient(address _recipient) internal {
+        require(_recipient != address(0), "Cannot set recipient to zero address");
+        feeRecipient = _recipient;
+    }
 }

@@ -4,39 +4,38 @@ pragma solidity 0.7.5;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-import "./interfaces/IHegicPoolV2.sol";
+import "./interfaces/IZLotPool.sol";
 import "./AutoStake.sol";
 
 
 /**
- * @author Larrypc
  * @title AutoStakeToZHegic
  * @notice Pools HegicIOUToken (rHEGIC) together and deposits to the rHEGIC --> HEGIC
  * redemption contract; withdraws HEGIC and deposits to zLOT HEGIC pool at regular
  * intervals.
  */
- contract AutoStakeToZHegic is AutoStake {
+ contract AutoStakeForZHegic is AutoStake {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
     IERC20 public zHEGIC;
-    IHegicPoolV2 public zLotPool;
+    IZLotPool public zLotPool;
 
     constructor(
         IERC20 _HEGIC,
         IERC20 _rHEGIC,
         IERC20 _zHEGIC,
-        IHegicPoolV2 _zLotPool,
-        IIOUTokenRedemption _redemption
+        IZLotPool _zLotPool,
+        IGradualTokenSwap _GTS,
+        uint feeRate,
+        address feeRecipient
     )
+    AutoStake(_HEGIC, _rHEGIC, _GTS)
     {
-        HEGIC = _HEGIC;
-        rHEGIC = _rHEGIC;
         zHEGIC = _zHEGIC;
         zLotPool = _zLotPool;
-        redemption = _redemption;
-
-        feeRecipient = msg.sender;
+        _setFeeRate(feeRate);
+        _setFeeRecipient(feeRecipient);
     }
 
     /**
@@ -47,13 +46,16 @@ import "./AutoStake.sol";
      * @return amountStaked Amount of zHEGIC received from staking HEGIC
      */
     function redeemAndStake() override external returns (uint amountRedeemed, uint amountStaked) {
-        amountRedeemed = redemption.redeem();
+        amountRedeemed = GTS.available(address(this));
+        require(amountRedeemed > 0, "No HEGIC to redeem");
+
+        GTS.withdraw();
         HEGIC.approve(address(zLotPool), amountRedeemed);
         amountStaked = zLotPool.deposit(amountRedeemed);
 
-        totalRedeemed += amountRedeemed;
-        totalStaked += amountStaked;
-        totalWithdrawable += amountStaked;
+        totalRedeemed = totalRedeemed.add(amountRedeemed);
+        totalStaked = totalStaked.add(amountStaked);
+        totalWithdrawable = totalWithdrawable.add(amountStaked);
 
         lastRedemptionTimestamp = block.timestamp;
     }
@@ -61,7 +63,7 @@ import "./AutoStake.sol";
     /**
      * @notice Withdraw all available zHEGIC claimable by the user.
      */
-    function withdrawStakedHEGIC() override external {
+    function withdraw() override external {
         uint amount = getUserWithdrawableAmount(msg.sender);
         require(amount > 0, "No zHEGIC token available for withdrawal");
 
@@ -71,11 +73,11 @@ import "./AutoStake.sol";
         zHEGIC.safeTransfer(msg.sender, amountAfterFee);
         zHEGIC.safeTransfer(feeRecipient, fee);
 
-        userData[msg.sender].amountWithdrawn += amount;
+        amountWithdrawn[msg.sender] = amountWithdrawn[msg.sender].add(amount);
 
-        totalWithdrawable -= amount;
-        totalWithdrawn += amountAfterFee;
-        totalFeeCollected += fee;
+        totalWithdrawable = totalWithdrawable.sub(amount);
+        totalWithdrawn = totalWithdrawn.add(amountAfterFee);
+        totalFeeCollected = totalFeeCollected.add(fee);
 
         emit Withdrawn(msg.sender, amountAfterFee, fee);
     }
@@ -88,9 +90,9 @@ import "./AutoStake.sol";
      */
     function getUserWithdrawableAmount(address account) public view returns (uint amount) {
         amount = totalStaked
-            .mul(userData[account].amountDeposited)
+            .mul(amountDeposited[account])
             .div(totalDeposited)
-            .sub(userData[account].amountWithdrawn);
+            .sub(amountWithdrawn[account]);
 
         if (totalWithdrawable < amount) {
             amount = totalWithdrawable;

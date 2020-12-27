@@ -5,7 +5,7 @@ pragma solidity 0.7.5;
 /**
  * @notice sHEGIC token & staking pool: 0xf4128B00AFdA933428056d0F0D1d7652aF7e2B35
  */
-interface IHegicStakingPool {
+interface ISHegic {
     function deposit(uint _amount) external;
     function transfer(address recipient, uint256 amount) external returns (bool);
     function claimAllProfit() external;
