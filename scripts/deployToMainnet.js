@@ -7,8 +7,8 @@ const addresses = {
   sHEGIC:   '0xf4128B00AFdA933428056d0F0D1d7652aF7e2B35',
   zHEGIC:   '0x837010619aeb2AE24141605aFC8f66577f6fb2e7',
   zLotPool: '0x9E4E091fC8921FE3575eab1c9a6446114f3b5Ef2',
-  GTS:      ''  // TBD
-}
+  GTS:      '0x1F533aCf0C12D12997c49F4B64192030B6647c46'
+};
 
 const deploy = async () => {
   const [ deployer, recipient ] = await ethers.getSigners();

@@ -46,10 +46,13 @@ const deploy = async () => {
   // GTS
   //--------------------
 
+  const start = await ethers.provider.getBlockNumber();
+  console.log(`Using ${start} as start block number`);
+
   const GradualTokenSwap = await ethers.getContractFactory('GradualTokenSwapUpgradable');
   const GradualTokenSwapInstance = await GradualTokenSwap
     .deploy(
-      await ethers.provider.getBlockNumber() + 14,
+      start,
       1000,
       FakeRHegicInstance.address,
       FakeHegicInstance.address

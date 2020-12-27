@@ -109,7 +109,7 @@ import "./AutoStake.sol";
      * @return true if all rHEGIC have been redeemed & staked; false if otherwise
      */
     function allowWithdrawal() public view returns (bool) {
-        if (totalRedeemed == totalDeposited) {
+        if (totalRedeemed > 0 && totalRedeemed == totalDeposited) {
             return true;
         } else {
             return false;
