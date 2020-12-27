@@ -36,6 +36,12 @@ contract FakeRHegic is ERC20("Fake rHEGIC", "FakeRHEGIC") {
     function mint(uint amount) external {
         _mint(msg.sender, amount);
     }
+
+    // Need to make the bytecode different from that of Fake HEGIC
+    // otherwise Hardhat can't verify it on etherscan
+    function isIOU() external pure returns (bool) {
+        return true;
+    }
 }
 
 
