@@ -134,7 +134,7 @@ import "./AutoStake.sol";
      * @notice Claim ETH and WBTC profit from the staking pool contract, and calculate
      * how much profit should be distributed to each staked token.
      */
-    function claimProfit() internal {
+    function claimProfit() public {
         uint ethBalanceBeforeClaim = address(this).balance;
         uint wbtcBalanceBeforeClaim = WBTC.balanceOf(address(this));
 

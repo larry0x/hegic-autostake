@@ -89,11 +89,14 @@ import "./AutoStake.sol";
      * @return amount The user's withdrawable amount
      */
     function getUserWithdrawableAmount(address account) public view returns (uint amount) {
-        amount = totalStaked
-            .mul(amountDeposited[account])
-            .div(totalDeposited)
-            .sub(amountWithdrawn[account]);
-
+        if (totalDeposited == 0) {
+            amount = 0;
+        } else {
+            amount = totalStaked
+                .mul(amountDeposited[account])
+                .div(totalDeposited)
+                .sub(amountWithdrawn[account]);
+        }
         if (totalWithdrawable < amount) {
             amount = totalWithdrawable;
         }

@@ -74,11 +74,15 @@ contract FakeSHegic is ERC20("Fake sHEGIC", "FakeSHEGIC") {
         }
     }
 
-    function profitOf(address account, uint asset) public pure returns (uint profit) {
-        if (asset == 0) {
-            profit = 1000000;  // 0 = WBTC
+    function profitOf(address account, uint asset) public view returns (uint profit) {
+        if (balanceOf(account) == 0) {
+            profit = 0;
         } else {
-            profit = 100000000000000000;  // 1 = ETH
+            if (asset == 0) {
+                profit = 1000000;  // 0 = WBTC
+            } else {
+                profit = 100000000000000000;  // 1 = ETH
+            }
         }
     }
 }
