@@ -8,8 +8,8 @@ at regular intervals.
 
 | Contract          | Address                                      | Link                                                                                 |
 |-------------------|----------------------------------------------|--------------------------------------------------------------------------------------|
-| AutoStakeToSHegic | TBD                                          | TBD                                                                                  |
-| AutoStakeToZHegic | TBD                                          | TBD                                                                                  |
+| AutoStakeToSHegic | Canceled                                     | n/a                                                                                  |
+| AutoStakeToZHegic | `0x7388992ADA8F45f92FAA8F439a3F68970fC8A013` | [Etherscan](https://etherscan.io/address/0x7388992ADA8F45f92FAA8F439a3F68970fC8A013) |
 | HEGIC             | `0x584bC13c7D411c00c01A62e8019472dE68768430` | [Etherscan](https://etherscan.io/address/0x584bC13c7D411c00c01A62e8019472dE68768430) |
 | rHEGIC            | `0x47C0aD2aE6c0Ed4bcf7bc5b380D7205E89436e84` | [Etherscan](https://etherscan.io/address/0x47C0aD2aE6c0Ed4bcf7bc5b380D7205E89436e84) |
 | sHEGIC            | `0xf4128B00AFdA933428056d0F0D1d7652aF7e2B35` | [Etherscan](https://etherscan.io/address/0xf4128B00AFdA933428056d0F0D1d7652aF7e2B35) |
