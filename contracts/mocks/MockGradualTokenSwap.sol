@@ -5,19 +5,13 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 
-// Forked from https://github.com/hegic/GradualTokenSwap/blob/master/contracts/ERC20Recovery.sol
-abstract contract ERC20Recovery is Ownable {
-    using SafeERC20 for IERC20;
-    function recoverERC20(IERC20 token) external onlyOwner {
-        token.safeTransfer(owner(), token.balanceOf(address(this)));
-    }
-}
-
-
-// Forked from https://github.com/hegic/GradualTokenSwap/blob/master/contracts/GradualTokenSwap.sol
-// Changed the release schedule from timestamp-based to block number-based so that
-// it's easier to test in a local testnet (e.g. Ganache)
-contract GradualTokenSwap is ERC20Recovery {
+/**
+ * @notice Forked from https://github.com/hegic/GradualTokenSwap/blob/master/contracts/GradualTokenSwap.sol
+ * @dev Changed the release schedule from timestamp-based to blocknumber-based so
+ * that it's easier to test in a local testnet (e.g. Ganache). The interface remains
+ * the same as the original GTS contract.
+ */
+contract MockGradualTokenSwap {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -66,34 +60,5 @@ contract GradualTokenSwap is ERC20Recovery {
         } else {
             return provided[account].mul(block.number.sub(start)).div(duration);
         }
-    }
-}
-
-
-// The same GradualTokenSwap contract but with functions to modify some state variables,
-// so that I don't need to redeploy the contract everytime I run a test.
-contract GradualTokenSwapUpgradable is GradualTokenSwap {
-    constructor(
-        uint256 _start,
-        uint256 _duration,
-        IERC20 _rHEGIC,
-        IERC20 _HEGIC
-    )
-    GradualTokenSwap(_start, _duration, _rHEGIC, _HEGIC)
-    { }
-
-    function setTokenAddresses(IERC20 _rHEGIC, IERC20 _HEGIC) external onlyOwner {
-        rHEGIC =_rHEGIC;
-        HEGIC = _HEGIC;
-    }
-
-    function setStateVariables(uint256 _start, uint256 _duration) external onlyOwner {
-        duration = _duration;
-        start = _start;
-    }
-
-    function resetUserData(address _account) external onlyOwner {
-        provided[_account] = 0;
-        released[_account] = 0;
     }
 }
