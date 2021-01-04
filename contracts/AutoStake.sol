@@ -107,7 +107,7 @@ contract AutoStake is Ownable {
     }
 
     //------------------------------
-    // External functions: Users
+    // External functions: users
     //------------------------------
 
     /**
@@ -173,7 +173,7 @@ contract AutoStake is Ownable {
     }
 
     //------------------------------
-    // External functions: Owner
+    // External functions: owner
     //------------------------------
 
     /**
@@ -186,20 +186,6 @@ contract AutoStake is Ownable {
 
         allowDeposit = false;
         allowClaimRefund = false;
-    }
-
-    /**
-     * @notice A wrapper for the `_redeem` internal function.
-     */
-    function redeem() external onlyOwner {
-        _redeem();
-    }
-
-    /**
-     * @notice A wrapper for the `_stake` internal function.
-     */
-    function stake() external onlyOwner {
-        _stake();
     }
 
     /**
@@ -224,6 +210,38 @@ contract AutoStake is Ownable {
      */
     function recoverERC20(IERC20 token) external onlyOwner {
         token.safeTransfer(owner(), token.balanceOf(address(this)));
+    }
+
+    //------------------------------
+    // Helper functions
+    //------------------------------
+
+    /**
+     * @notice Get the amount of HEGIC available for redemption.
+     */
+    function getRedeemableAmount() external view returns (uint amount) {
+        amount = GTS.available(address(this));
+    }
+
+    /**
+     * @notice Wrapper for the `_getUserWithdrawableAmount` function.
+     */
+    function getUserWithdrawableAmount(address account) external view returns (uint amount) {
+        amount = _getUserWithdrawableAmount(account);
+    }
+
+    /**
+     * @notice Wrapper for the `_redeem` internal function.
+     */
+    function redeem() external onlyOwner {
+        _redeem();
+    }
+
+    /**
+     * @notice Wrapper for the `_stake` internal function.
+     */
+    function stake() external onlyOwner {
+        _stake();
     }
 
     //------------------------------
