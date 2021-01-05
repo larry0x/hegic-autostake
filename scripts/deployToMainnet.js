@@ -13,7 +13,7 @@ const deploy = async () => {
   console.log(`Using account ${deployer.address} as deployer`);
   console.log(`Using account ${recipient.address} as recipient`);
 
-  const AutoStake = await ethers.getContractFactory('AutoStakeForZHegic');
+  const AutoStake = await ethers.getContractFactory('AutoStake');
   const AutoStakeInstance = await AutoStake.deploy(
     addresses.HEGIC,
     addresses.rHEGIC,
