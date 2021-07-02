@@ -1,13 +1,11 @@
-# HEGIC AutoStake: contracts
+# HEGIC AutoStake: Contracts
 
-Pools rHEGIC tokens together, redeem HEGIC, and stake to one of the staking pools
-([hegicstaking.co](https://www.hegicstaking.co/) or [zLOT](https://zlot.finance/))
-at regular intervals.
+Pools rHEGIC tokens together, redeem HEGIC, and stake to [zLOT](https://zlot.finance/) at regular intervals.
 
 ## Mainnet contract addresses
 
 | Contract         | Address                                      | Link                                                                                 |
-|------------------|----------------------------------------------|--------------------------------------------------------------------------------------|
+| ---------------- | -------------------------------------------- | ------------------------------------------------------------------------------------ |
 | AutoStake        | TBD                                          | TBD                                                                                  |
 | HEGIC            | `0x584bC13c7D411c00c01A62e8019472dE68768430` | [Etherscan](https://etherscan.io/address/0x584bC13c7D411c00c01A62e8019472dE68768430) |
 | rHEGIC           | `0x47C0aD2aE6c0Ed4bcf7bc5b380D7205E89436e84` | [Etherscan](https://etherscan.io/address/0x47C0aD2aE6c0Ed4bcf7bc5b380D7205E89436e84) |

@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Larrypcdotcom/hegic-autostake.git"
+    "url": "git+https://github.com/0xlarry/hegic-autostake.git"
   },
-  "author": "@Larrypcdotcom",
-  "license": "GPL-3.0-or-later",
+  "author": "@larry0x <https://twitter.com/larry0x>",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Larrypcdotcom/hegic-autostake/issues"
+    "url": "https://github.com/0xlarry/hegic-autostake/issues"
   },
-  "homepage": "https://github.com/Larrypcdotcom/hegic-autostake#readme",
+  "homepage": "https://github.com/0xlarry/hegic-autostake#readme",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.1",
     "@nomiclabs/hardhat-etherscan": "^2.1.0",
