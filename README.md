@@ -1,4 +1,4 @@
-# hegic-autostake-frontend
+# Hegic AutoStake: Webapp
 
 URL: [https://hegic.autostake.co/](https://hegic.autostake.co/)
 

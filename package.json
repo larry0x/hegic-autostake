@@ -1,5 +1,5 @@
 {
-  "name": "hegic-autostake-frontend",
+  "name": "hegic-autostake-webapp",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Larrypcdotcom/hegic-autostake-frontend.git"
+    "url": "git+https://github.com/0xlarry/hegic-autostake.git"
   },
-  "author": "@Larrypcdotcom",
-  "license": "GPL-3.0-or-later",
+  "author": "@larry0x <https://twitter.com/larry0x>",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Larrypcdotcom/hegic-autostake-frontend/issues"
+    "url": "https://github.com/0xlarry/hegic-autostake/issues"
   },
-  "homepage": "https://github.com/Larrypcdotcom/hegic-autostake-frontend#readme",
+  "homepage": "https://github.com/0xlarry/hegic-autostake#readme",
   "devDependencies": {
     "express": "^4.17.1",
     "nodemon": "^2.0.6"
