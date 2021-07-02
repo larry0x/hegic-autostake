@@ -1,0 +1,23 @@
+{
+  "name": "hegic-autostake-frontend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Larrypcdotcom/hegic-autostake-frontend.git"
+  },
+  "author": "@Larrypcdotcom",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/Larrypcdotcom/hegic-autostake-frontend/issues"
+  },
+  "homepage": "https://github.com/Larrypcdotcom/hegic-autostake-frontend#readme",
+  "devDependencies": {
+    "express": "^4.17.1",
+    "nodemon": "^2.0.6"
+  }
+}
