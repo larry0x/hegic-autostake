@@ -7,3 +7,9 @@ Run locally:
 ```bash
 node server.js
 ```
+
+Host using GitHub pages
+
+```
+git subtree push --prefix webapp origin gh-pages
+```
