@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1"
+      crossorigin="anonymous">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap"
+      rel="stylesheet">
+
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="icon" href="images/Hegic.png"/>
+    <title>HEGIC AutoStake</title>
+  </head>
+  <body>
+    <div id="spinnerContainer">
+      <img id="spinner" src="images/Spin-1s-200px.gif"></img>
+    </div>
+
+    <div id="toastContainer" class="toast-container p-3">
+    </div>
+
+    <nav class="navbar fixed-top">
+      <button id="connectWalletBtn" class="btn btn-outline-primary ms-auto me-1">
+        Connect wallet
+      </button>
+      <div
+        id="networkName"
+        class="fake-button rounded border border-info text-info ms-auto me-1"
+        style="display: none;">
+      </div>
+      <div
+        id="walletAddress"
+        class="fake-button rounded border border-dark ms-1 me-1"
+        style="display: none;">
+      </div>
+      <button id="refreshBtn" class="btn btn-outline-success ms-1 me-3">
+        Refresh data
+      </button>
+    </nav>
+
+    <div id="titleContainer" class="container-fluid text-center mt-6">
+      <h1 class="text-danger handwritten-font">🧙‍♂️ Hegic AutoStake 🧙‍♀️</h1>
+    </div>
+
+    <div id="togglerContainer" class="container-fluid text-center mt-4AndHalf">
+      <div class="btn-group mb-2" role="group">
+        <div class="fake-button rounded-start border border-dark bg-lightgray ms-1">
+          Stake to <a href="https://zlot.finance/">zLOT</a>
+        </div>
+
+        <input type="radio" class="btn-check" name="btnradio" id="depositToggler" checked>
+        <label class="btn btn-outline-dark" for="depositToggler">Deposit</label>
+
+        <input type="radio" class="btn-check" name="btnradio" id="withdrawToggler">
+        <label class="btn btn-outline-dark" for="withdrawToggler">Withdraw</label>
+      </div>
+
+      <button id="readMeToggler" class="btn btn-outline-success ms-4 mb-2">
+        READ ME
+      </button>
+      <button id="developerToggler" class="btn btn-outline-danger ms-1 mb-2">
+        Developer tools
+      </button>
+    </div>
+
+    <div id="depositTab" class="container-fluid mt-4 max-width-1200px">
+      <div class="row">
+        <div class="col-sm-12 col-md-4">
+          <div class="card text-center border-dark mb-3">
+            <div class="card-header">
+              <h4>Accepting deposit now</h4>
+            </div>
+            <div class="card-body">
+              <h1 id="allowDeposit">?</h1>
+            </div>
+          </div>
+          <div class="card text-center border-dark mb-3">
+            <div class="card-header">
+              <h4>Number of depositors</h4>
+            </div>
+            <div class="card-body">
+              <h1 id="totalDepositors">?</h1>
+            </div>
+          </div>
+          <div class="card text-center border-dark mb-3">
+            <div class="card-header">
+              <h4>Total deposit received</h4>
+            </div>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">
+                <h1><span id="totalDeposited"></span> rHEGIC</h1>
+              </li>
+              <li class="list-group-item">
+                <h4>$<span id="totalDepositedUsd"></span></h4>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-sm-12 col-md-4">
+          <div class="card text-center border-dark mb-3">
+            <div class="card-header">
+              <h4>Total redeemed</h4>
+            </div>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">
+                <h1><span id="totalRedeemed"></span> HEGIC</h1>
+              </li>
+              <li class="list-group-item">
+                <h4>$<span id="totalRedeemedUsd"></span></h4>
+              </li>
+            </ul>
+          </div>
+          <div class="card text-center border-dark mb-3">
+            <div class="card-header">
+              <h4>Total staked</h4>
+            </div>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">
+                <h1><span id="totalStaked"></span> zHEGIC</h1>
+              </li>
+              <li class="list-group-item">
+                <div class="mb-1">Equivalent to</div>
+                <h1><span id="totalStakedEquivalent"></span> HEGIC</h1>
+              </li>
+              <li class="list-group-item">
+                <h4>+<span id="earnings"></span> HEGIC ($<span id="earningsUsd"></span>)</h4>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-sm-12 col-md-4">
+          <div class="card text-center border-dark mb-3">
+            <div class="card-header">
+              <h4>Redemption progress</h4>
+            </div>
+            <div class="card-body">
+              <h1><span id="redemptionProgress"></span>%</h1>
+            </div>
+          </div>
+          <div class="card text-center border-dark mb-3">
+            <div class="card-header">
+              <h4>Available for withdrawal</h4>
+            </div>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">
+                <h1><span id="totalWithdrawable"></span> zHEGIC</h1>
+              </li>
+              <li class="list-group-item">
+                <h4>$<span id="totalWithdrawableUsd"></span></h4>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <form class="row row-cols-xs-auto mt-5 ms-auto me-auto max-width-800px">
+        <div class="col-8 ps-1 pe-1">
+          <div class="input-group ms-1">
+            <span class="input-group-text" id="prepend">rHEGIC</span>
+            <input
+              type="number"
+              class="form-control"
+              id="depositAmountInput"
+              placeholder="No longer accepting new deposits"
+              aria-describedby="prepend"
+              disabled>
+          </div>
+          <div class="mt-3 ms-2" id="userWalletAmount">Wallet not connected</div>
+        </div>
+        <div class="col-4 ps-1 pe-1">
+          <button type="button" class="btn btn-outline-danger ms-1 mb-2" id="depositMaxBtn" disabled>Max</button>
+          <div class="btn-group ms-1 me-1 mb-2" role="group">
+            <button type="button" class="btn btn-primary" id="approveBtn" disabled>Approve</button>
+            <button type="button" class="btn btn-primary" id="depositBtn" disabled>Deposit</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div id="withdrawTab" class="container-fluid mt-5 text-center max-width-1200px" style="display: none;">
+      <div class="row">
+        <div class="col-sm-12 col-md-4">
+          <div class="card border-dark mb-3">
+            <div class="card-header">
+              <h4>You have deposited</h4>
+            </div>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">
+                <h1><span id="userDeposited"></span> rHEGIC</h1>
+              </li>
+              <li class="list-group-item">
+                <h4>$<span id="userDepositedUsd"></span></h4>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-sm-12 col-md-4">
+          <div class="card border-dark mb-3">
+            <div class="card-header">
+              <h4>You have withdrawn</h4>
+            </div>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">
+                <h1><span id="userWithdrawn"></span> zHEGIC</h1>
+              </li>
+              <li class="list-group-item">
+                <h4>$<span id="userWithdrawnUsd"></span></h4>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-sm-12 col-md-4">
+          <div class="card border-dark mb-3">
+            <div class="card-header">
+              <h4>Withdrawable now</h4>
+            </div>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">
+                <h1><span id="userWithdrawable"></span> zHEGIC</h1>
+              </li>
+              <li class="list-group-item">
+                <h4>$<span id="userWithdrawableUsd"></span></h4>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <button id="withdrawBtn" class="btn btn-lg btn-outline-danger mt-5 mb-3" disabled>
+          Withdraw zHEGIC
+        </button>
+        <div id="userReceiveAmount">Wallet not connected</div>
+      </div>
+    </div>
+
+    <div id="readMeTab" class="container-fluid mt-5" style="display: none;">
+      <div class="row ps-5 pe-5">
+        <div class="col-xl-6">
+          <div class="rounded border border-dark mb-3 p-4">
+            <p>
+              <b>Hegic AutoStake</b> is a pair of smart contracts designed for
+               liquidity providers to effortlessly redeem & stake their yield farming gains.
+            <p>
+            <h3 class="text-maroon">
+              Motivation
+            </h3>
+            <p>
+              Liquidity providers of <a href="https://twitter.com/HegicOptions">@HegicOptions</a>
+              are rewarded <a href="https://etherscan.io/address/0x47C0aD2aE6c0Ed4bcf7bc5b380D7205E89436e84">rHEGIC</a>,
+              an IOU token that can be redeemed for
+              <a href="https://etherscan.io/address/0x584bC13c7D411c00c01A62e8019472dE68768430">the real HEGIC token</a>
+              gradually over 6 months, once the milestone of $100M total option volume is achieved.
+            </p>
+            <p>
+              To maximize gains, one will want to redeem HEGIC at regular intervals
+              (e.g. once a week) and stake those in one of the staking pools (hegicstaking.co
+              zLOT, or the upcoming yHEGIC vault) to earn fees generated by the protocol.
+              However, this process:
+            </p>
+            <ul>
+              <li>
+                <b>consumes a large amount of gas.</b> If doing this once a week, there will
+                be 52 transactions in total over the 6 months, per user.
+              </li>
+              <li>
+                <b>is not tax efficient.</b> In the US for example, each token swap is considered
+                a taxable event, regardless of the nature of the swap. That’s an additional
+                52 lines in your Form 1040 Schedule D!
+              </li>
+            </ul>
+            <p>
+              Of course, one can choose to wait after the full 6 months, then redeem
+              the full amount in one batch. However, this would mean missing out on
+              half a year’s gain in staking rewards, which could be a considerable amount
+              at the current APY.
+            </p>
+            <h3 class="text-maroon">
+              Save gas and tax by using Hegic AutoStake
+            </h3>
+            <p>
+              AutoStake was created to solve this problem. Each user will need to do
+              no more than 2 transactions: deposit rHEGIC & withdraw zHEGIC, and therefore
+              incur only 2 taxable events, while earning fees in staking pools. This
+              is how it will work:
+            </p>
+            <ol>
+              <li>
+                Users pool rHEGIC tokens together;
+              </li>
+              <li>
+                rHEGIC tokens are transferred to <a href="https://www.hegic.co/swap">
+                the rHEGIC → HEGIC swap contract</a> in one batch;
+              </li>
+              <li>
+                Over the next 6 months, the developer will call a function of the
+                contract (<code>redeemAndStake</code>) at regular intervals (e.g. once
+                a day) which will redeem the maximum possible amount of HEGIC, and stake
+                those zLOT. The contract will receive zHEGIC tokens;
+              </li>
+              <li>
+                Users can withdraw available zHEGIC at any time.
+              </li>
+            </ol>
+          </div>
+        </div>
+        <div class="col-xl-6">
+          <div class="rounded border border-dark mb-3 p-4">
+            <h3 class="text-maroon">
+              Withdrawal
+            </h3>
+            <p>
+              Users can withdraw zHEGIC at any time during the 6 months. The withdrawable
+              amount is calculated as follows:
+            </p>
+            <div class="rounded bg-milk p-3 mb-3 text-center">
+              <code>
+                amountZHegicWithdrawableByUser = amountZHegicStaked * amountRHegicDepositedByUser /
+                amountRHegicDepositedByAllUsers - amountZHegicAlreadyWithdrawnByUser
+              </code>
+            </div>
+            <p>
+              At the end of the 6 months, the user can withdraw the full amount of zHEGIC
+              he's entitled to.
+            </p>
+            <h3 class="text-maroon">
+              Fees
+            </h3>
+            <p>
+              <b>There will be a fee of 2% upon withdrawal.</b> That is, if a user withdraws
+              100 zHEGIC, he will receive 98, and the developer will receive 2.
+              The fee is charged to compensate the developer of the gas he has to pay
+              for deploying the contracts & calling functions over the 6 months.
+            </p>
+            <p>
+              The contract allows the developer to change the fee rate at anytime between
+              0 – 5%, but it can never go above 5%
+              (<a href="https://github.com/Larrypcdotcom/hegic-autostake/blob/main/contracts/AutoStake.sol#L89">proof</a>).
+              The developer promises to never increase the fee without fully communicating
+              with users (this is where you have to trust me).
+            </p>
+            <h3 class="text-maroon">
+              Risks
+            </h3>
+            <p class="mb-0">
+              As always in crypto, <b>Don’t Trust, Verify.</b> <u>Users are encouraged
+              to review the code (<a href="https://github.com/Larrypcdotcom/hegic-autostake">contracts</a>,
+              <a href="https://github.com/Larrypcdotcom/hegic-autostake-frontend">frontend</a>)
+              and assess its security before making any deposit.</u>
+              <span class="text-danger">The developer will not (and cannot afford to)
+              provide users compensation in case funds are lost due to hacks or glitches
+              in the code.</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="developerTab" class="container-fluid mt-5 text-center" style="display: none;">
+      <div class="card border-dark mt-3 mb-4 ms-auto me-auto max-width-400px">
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item">
+            <div class="row">
+              <div class="col-6 text-start">
+                Last redeemed
+              </div>
+              <div class="col-6 text-end">
+                <b><span id="lastRedeemed">n/a</span> hours ago</b>
+              </div>
+            </div>
+          </li>
+          <li class="list-group-item">
+            <div class="row">
+              <div class="col-6 text-start">
+                Redeemable amount
+              </div>
+              <div class="col-6 text-end">
+                <b><span id="redeemableAmount"></span> HEGIC</b>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <button id="callFunctionBtn" class="btn btn-lg btn-outline-danger mt-4 mb-4" disabled>
+        Call redeemAndStake function
+      </button>
+      <br>
+      <a
+        href="https://etherscan.io/address/0x1F533aCf0C12D12997c49F4B64192030B6647c46"
+        class="btn btn-outline-info ms-1 me-1"
+        target="_blank" rel="noopener noreferrer">
+        GTS on Etherscan
+      </a>
+      <a
+        href="https://etherscan.io/address/0xfe7621FF771dfeCF28A2037F6d7eB3605106ED39"
+        class="btn btn-outline-info ms-1 me-1"
+        target="_blank" rel="noopener noreferrer">
+        AutoStake on Etherscan
+      </a>
+      <a
+        href="https://etherscan.io/address/0x3c392C2b0956bb2e3b80627DF0c9989BA12cF345"
+        class="btn btn-outline-info ms-1 me-1"
+        target="_blank" rel="noopener noreferrer">
+        AutoStake on Etherscan (test)
+      </a>
+    </div>
+
+    <footer class="text-center">
+      Created by <a href="https://twitter.com/larry0x">@larry0x</a>
+    </footer>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous">
+    </script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW"
+      crossorigin="anonymous">
+    </script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/web3@1.3.0/dist/web3.min.js"
+      integrity="sha256-pxcClsiHeORk6RqJUWRiwVaxhtUPU8drEtfT8EA/Btw="
+      crossorigin="anonymous">
+    </script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/web3modal@1.9.2/dist/index.min.js">
+    </script>
+
+    <script src="js/globals.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/connectWallet.js"></script>
+    <script src="js/interactWithContracts.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>
